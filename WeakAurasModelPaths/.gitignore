@@ -1,0 +1,4 @@
+*.csv
+.lastclassicwowbuild
+.lastwowbuild
+.wowtools.json
