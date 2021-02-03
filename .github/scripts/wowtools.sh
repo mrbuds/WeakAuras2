@@ -21,6 +21,11 @@ else
             else
                 echo ${wowbuild} > .lastwowbuild
                 lua ./csv_to_lua.lua retail
+                if [ $? -ne 0 ]; then
+                  echo "error while creating classic lua file"
+                else
+                  mv ModelPaths.lua ../../WeakAurasModelPaths/
+                fi
             fi
         fi
     fi
@@ -38,6 +43,11 @@ else
             else
                 echo ${classicwowbuild} > .lastclassicwowbuild
                 lua ./csv_to_lua.lua classic
+                if [ $? -ne 0 ]; then
+                  echo "error while creating classic lua file"
+                else
+                  mv ModelPathsClassic.lua ../../WeakAurasModelPaths/
+                fi
             fi
         fi
     fi
