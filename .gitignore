@@ -9,3 +9,4 @@ format.bat
 .DS_Store
 .release
 .install
+.lua/*
