@@ -3,6 +3,7 @@ name: Create WeakAurasModelPaths update pull request
 on:
   schedule:
     - cron:  '0 10 * * *'
+  workflow_dispatch:
 
 jobs:
   modelPathsUpdate:
