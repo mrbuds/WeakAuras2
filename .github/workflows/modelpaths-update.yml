@@ -16,6 +16,7 @@ jobs:
         run: |
           cd WeakAurasModelPaths
           ./wowtools.sh
+        shell: bash
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
