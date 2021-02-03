@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 wget -O ".wowtools.json" "https://wow.tools/api.php?type=currentbc"
 
