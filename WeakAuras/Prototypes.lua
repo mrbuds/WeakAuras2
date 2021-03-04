@@ -4547,6 +4547,8 @@ Private.event_prototypes = {
     triggerFunction = function(trigger)
       WeakAuras.RegisterDBMCallback("DBM_TimerStart")
       WeakAuras.RegisterDBMCallback("DBM_TimerStop")
+      WeakAuras.RegisterDBMCallback("DBM_TimerPause")
+      WeakAuras.RegisterDBMCallback("DBM_TimerResume")
       WeakAuras.RegisterDBMCallback("DBM_TimerUpdate")
       WeakAuras.RegisterDBMCallback("wipe")
       WeakAuras.RegisterDBMCallback("kill")

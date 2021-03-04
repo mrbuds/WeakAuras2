@@ -2622,7 +2622,7 @@ do
   end
 
   local function dbmEventCallback(event, ...)
-    if event == "DBM_TimerStart" then
+    if event == "DBM_TimerStart" or event == "DBM_TimerResume" then
       local id, msg, duration, icon, timerType, spellId, dbmType = ...
       local now = GetTime()
       local expirationTime = now + duration
@@ -2667,7 +2667,7 @@ do
         recheckTimer = timer:ScheduleTimerFixed(dbmRecheckTimers, expirationTime - now)
         nextExpire = expirationTime
       end
-    elseif event == "DBM_TimerStop" then
+    elseif event == "DBM_TimerStop" or event == "DBM_TimerPause" then
       local id = ...
       bars[id] = nil
       WeakAuras.ScanEvents("DBM_TimerStop", id)
