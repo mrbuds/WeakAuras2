@@ -1176,7 +1176,8 @@ Private.load_prototype = {
       display = L["Player Class"],
       type = "multiselect",
       values = "class_types",
-      init = "arg"
+      init = "arg",
+      tristate = true
     },
     {
       name = "spec",

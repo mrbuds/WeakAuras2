@@ -592,25 +592,33 @@ local function ConstructFunction(prototype, trigger, skipOptional)
             if(trigger["use_"..name] == false) then -- multi selection
               local any = false;
               if (trigger[name] and trigger[name].multi) then
-                test = "(";
-                for value, _ in pairs(trigger[name].multi) do
+                test = ""
+                local test_or = {}
+                local test_and = {}
+                for value, truth in pairs(trigger[name].multi) do
                   if not arg.test then
-                    test = test..name.."=="..(tonumber(value) or "[["..value.."]]").." or ";
+                    if truth then
+                      tinsert(test_or, name.."=="..(tonumber(value) or "[["..value.."]]"))
+                    else
+                      tinsert(test_and, name.."~="..(tonumber(value) or "[["..value.."]]"))
+                    end
                   else
                     if arg.extraOption then
-                      test = test..arg.test:format(tonumber(value) or "[["..value.."]]", trigger[name .. "_extraOption"] or 0).." or ";
+                      tinsert(test_or, arg.test:format(tonumber(value) or "[["..value.."]]", trigger[name .. "_extraOption"] or 0))
                     else
-                      test = test..arg.test:format(tonumber(value) or "[["..value.."]]").." or ";
+                      tinsert(test_or, arg.test:format(tonumber(value) or "[["..value.."]]"))
                     end
                   end
-                  any = true;
                 end
-                if(any) then
-                  test = test:sub(1, -5);
+                if #test_or > 0 and #test_and > 0 then
+                  test = ("((%s) and (%s))"):format(table.concat(test_or, " or "), table.concat(test_and, " and "))
+                elseif #test_or > 0 then
+                  test = ("(%s)"):format(table.concat(test_or, " or "))
+                elseif #test_and > 0 then
+                  test = ("(%s)"):format(table.concat(test_and, " and "))
                 else
-                  test = "(false";
+                  test = "false"
                 end
-                test = test..")"
                 if arg.inverse then
                   if type(arg.inverse) == "boolean" then
                     test = "not " .. test

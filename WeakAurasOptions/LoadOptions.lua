@@ -794,10 +794,31 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
           width = WeakAuras.doubleWidth,
           order = order,
           hidden = function() return (type(hidden) == "function" and hidden(trigger)) or (type(hidden) ~= "function" and hidden) or trigger["use_"..realname] ~= false; end,
-          values = values,
+          values = function()
+            if not arg.tristate then return values end
+            local ret = {}
+            for k, v in pairs(values) do
+              if trigger[realname].multi[k] then
+                ret[k] = "|cFF00FF00"..v
+              elseif trigger[realname].multi[k] == false then
+                local nocolor = v:gsub("|c%x%x%x%x%x%x%x%x", "")
+                ret[k] = "|cFFFF0000"..nocolor
+              else
+                ret[k] = v
+              end
+            end
+            return ret
+          end,
           get = function(info, v)
             if(trigger["use_"..realname] == false and trigger[realname] and trigger[realname].multi) then
-              return trigger[realname].multi[v];
+              if arg.tristate then
+                local value = trigger[realname].multi[v]
+                if(value == nil) then return false;
+                elseif(value == false) then return "false";
+                else return "true"; end
+              else
+                return trigger[realname].multi[v];
+              end
             end
           end,
           set = function(info, v, calledFromSetAll)
@@ -805,9 +826,15 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
             if (calledFromSetAll) then
               trigger[realname].multi[v] = calledFromSetAll;
             elseif(trigger[realname].multi[v]) then
-              trigger[realname].multi[v] = nil;
+              if arg.tristate then
+                trigger[realname].multi[v] = false
+              else
+                trigger[realname].multi[v] = nil
+              end
+            elseif trigger[realname].multi[v] == false then
+              trigger[realname].multi[v] = nil
             else
-              trigger[realname].multi[v] = true;
+              trigger[realname].multi[v] = true
             end
             WeakAuras.Add(data);
             if (reloadOptions) then
