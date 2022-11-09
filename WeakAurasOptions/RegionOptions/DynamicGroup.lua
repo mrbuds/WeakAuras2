@@ -383,16 +383,161 @@ local function createOptions(id, data)
       order = 24,
       hidden = function() return data.sort == "hybrid" end
     },
-    useLimit = {
+    useForceSize = {
       type = "toggle",
       order = 25,
+      width = WeakAuras.doubleWidth,
+      name = L["Force Size"],
+      hidden = function() return data.grow == "CUSTOM" end,
+    },
+    minWidthMode = {
+      type = "select",
+      order = 26,
+      width = WeakAuras.normalWidth,
+      name = L["Minimum Width"],
+      values = {
+        none = L["None"],
+        fixed = L["Fixed"],
+        parent = L["To Parent"]
+      },
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end,
+    },
+    minWidthFixed = {
+      type = "range",
+      width = WeakAuras.normalWidth,
+      name = L["Size"],
+      order = 27,
+      softMin = 1,
+      softMax = 4096,
+      bigStep = 1,
+      hidden = function()
+        return data.grow == "CUSTOM" or not data.useForceSize or data.minWidthMode ~= "fixed"
+      end
+    },
+    minWidthSpace = {
+      type = "description",
+      name = "",
+      width = WeakAuras.normalWidth,
+      order = 27.5,
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize or data.minWidthMode == "fixed" end
+    },
+    maxWidthMode = {
+      type = "select",
+      order = 28,
+      width = WeakAuras.normalWidth,
+      name = L["Maximum Width"],
+      values = {
+        none = L["None"],
+        fixed = L["Fixed"],
+        parent = L["To Parent"]
+      },
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end,
+    },
+    maxWidthFixed = {
+      type = "range",
+      width = WeakAuras.normalWidth,
+      name = L["Size"],
+      order = 29,
+      softMin = 1,
+      softMax = 4096,
+      bigStep = 1,
+      hidden = function()
+        return data.grow == "CUSTOM" or not data.useForceSize or data.maxWidthMode ~= "fixed"
+      end
+    },
+    maxWidthSpace = {
+      type = "description",
+      name = "",
+      width = WeakAuras.normalWidth,
+      order = 29.5,
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize or data.maxWidthMode == "fixed" end
+    },
+    minHeightMode = {
+      type = "select",
+      order = 30,
+      width = WeakAuras.normalWidth,
+      name = L["Minimum Height"],
+      values = {
+        none = L["None"],
+        fixed = L["Fixed"],
+        parent = L["To Parent"]
+      },
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end,
+    },
+    minHeightFixed = {
+      type = "range",
+      width = WeakAuras.normalWidth,
+      name = L["Size"],
+      order = 31,
+      softMin = 1,
+      softMax = 4096,
+      bigStep = 1,
+      hidden = function()
+        return data.grow == "CUSTOM" or not data.useForceSize or data.minHeightMode ~= "fixed"
+      end
+    },
+    minHeightSpace = {
+      type = "description",
+      name = "",
+      width = WeakAuras.normalWidth,
+      order = 31.5,
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize or data.minHeightMode == "fixed" end
+    },
+    maxHeightMode = {
+      type = "select",
+      order = 32,
+      width = WeakAuras.normalWidth,
+      name = L["Maximum Height"],
+      values = {
+        none = L["None"],
+        fixed = L["Fixed"],
+        parent = L["To Parent"]
+      },
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end,
+    },
+    maxHeightFixed = {
+      type = "range",
+      width = WeakAuras.normalWidth,
+      name = L["Size"],
+      order = 33,
+      softMin = 1,
+      softMax = 4096,
+      bigStep = 1,
+      hidden = function()
+        return data.grow == "CUSTOM" or not data.useForceSize or data.maxHeightMode ~= "fixed"
+      end
+    },
+    maxHeightSpace = {
+      type = "description",
+      name = "",
+      width = WeakAuras.normalWidth,
+      order = 33.5,
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize or data.maxHeightMode == "fixed" end
+    },
+    aspectRatio = {
+      type = "toggle",
+      order = 33.6,
+      width = WeakAuras.normalWidth,
+      name = L["Keep aspect ratio"],
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end
+    },
+    aspectRatioSpace = {
+      type = "description",
+      name = "",
+      width = WeakAuras.normalWidth,
+      order = 33.7,
+      hidden = function() return data.grow == "CUSTOM" or not data.useForceSize end
+    },
+    useLimit = {
+      type = "toggle",
+      order = 34,
       width = WeakAuras.normalWidth,
       name = L["Limit"],
       hidden = function() return data.grow == "CUSTOM" end,
     },
     limit = {
       type = "range",
-      order = 26,
+      order = 35,
       width = WeakAuras.normalWidth,
       name = L["Limit"],
       min = 0,
@@ -405,13 +550,13 @@ local function createOptions(id, data)
       type = "toggle",
       width = WeakAuras.normalWidth,
       name = L["Animated Expand and Collapse"],
-      order = 27
+      order = 36
     },
     scale = {
       type = "range",
       width = WeakAuras.normalWidth,
       name = L["Group Scale"],
-      order = 28,
+      order = 37,
       min = 0.05,
       softMax = 2,
       max = 10,
@@ -444,7 +589,7 @@ local function createOptions(id, data)
                           1.7, function() return not(data.grow ~= "CUSTOM" and data.useAnchorPerUnit and data.anchorPerUnit == "CUSTOM") end, {"customAnchorPerUnit"}, false, { setOnParent = true })
 
   local borderHideFunc = function() return data.useAnchorPerUnit end
-  local disableSelfPoint = function() return data.grow ~= "CUSTOM" and data.grow ~= "GRID" and not data.useAnchorPerUnit end
+  local disableSelfPoint = function() return false end -- data.grow ~= "CUSTOM" and data.grow ~= "GRID" and not data.useAnchorPerUnit end
 
   for k, v in pairs(OptionsPrivate.commonOptions.BorderOptions(id, data, nil, borderHideFunc, 70)) do
     options[k] = v

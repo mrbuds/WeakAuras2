@@ -417,6 +417,78 @@ local function getDimension(regionData, dim)
   return regionData.dimensions[dim]
 end
 
+local function getMinMaxSize(data, regionData, numVisible, direction, doResizing, parent)
+  local minWidth, maxWidth, minHeight, maxHeight
+  local width, height = regionData.dimensions.width, regionData.dimensions.height
+  local space = data.space or 0
+  local parentWidth, parentHeight = parent:GetSize()
+  if data.useForceSize then
+    local widthUsedBySpaces = direction == "HORIZONTAL" and space * (numVisible - 1) or 0
+    local heightUsedBySpaces = direction == "VERTICAL" and space * (numVisible - 1) or 0
+    if data.minWidthMode == "parent" or (data.minWidthMode == "fixed" and data.minWidthFixed) then
+      local minWidthSet = data.minWidthMode == "parent" and parentWidth or data.minWidthFixed
+      if direction == "HORIZONTAL" then
+        minWidth = (minWidthSet - widthUsedBySpaces) / numVisible
+      else
+        minWidth = minWidthSet
+      end
+      width = math.max(width, minWidth)
+    end
+    if data.maxWidthMode == "parent" or (data.maxWidthMode == "fixed" and data.maxWidthFixed) then
+      local maxWidthSet = data.minWidthMode == "parent" and parentWidth or data.maxWidthFixed
+      if direction == "HORIZONTAL" then
+        maxWidth = (maxWidthSet - widthUsedBySpaces) / numVisible
+      else
+        maxWidth = maxWidthSet
+      end
+      if maxWidth == nil then
+        print("wtf", direction, data.maxWidthMode, data.maxWidthFixed)
+      end
+      width = math.min(width, maxWidth)
+    end
+    if data.minHeightMode == "parent" or (data.minHeightMode == "fixed" and data.minHeightFixed) then
+      local minHeightSet = data.minHeightMode == "parent" and parentHeight or data.minHeightFixed
+      if direction == "VERTICAL" then
+        minHeight = (minHeightSet - heightUsedBySpaces) / numVisible
+      else
+        minHeight = minHeightSet
+      end
+      height = math.max(height, minHeight)
+    end
+    if data.maxHeightMode == "parent" or (data.maxHeightMode == "fixed" and data.maxHeightFixed) then
+      local maxHeightSet = data.maxHeightMode == "parent" and parentHeight or data.maxHeightFixed
+      if direction == "VERTICAL" then
+        maxHeight = maxHeightSet / numVisible
+      else
+        maxHeight = maxHeightSet
+      end
+      height = math.min(height, maxHeight)
+    end
+    if doResizing then
+      if data.aspectRatio then
+        if direction == "HORIZONTAL" and width ~= regionData.dimensions.width then
+          local ratio = regionData.dimensions.height / regionData.dimensions.width
+          regionData.region:SetRegionWidth(width)
+          regionData.region:SetRegionHeight(width * ratio)
+        end
+        if direction == "VERTICAL" and height ~= regionData.dimensions.height then
+          local ratio = regionData.dimensions.width / regionData.dimensions.height
+          regionData.region:SetRegionHeight(height)
+          regionData.region:SetRegionWidth(height * ratio)
+        end
+      else
+        if width ~= regionData.dimensions.width then
+          regionData.region:SetRegionWidth(width)
+        end
+        if height ~= regionData.dimensions.height then
+          regionData.region:SetRegionHeight(height)
+        end
+      end
+    end
+  end
+  return width, height
+end
+
 local growers = {
   LEFT = function(data)
     local stagger = -(data.stagger or 0)
@@ -425,7 +497,7 @@ local growers = {
     local startX, startY = 0, 0
     local coeff = staggerCoefficient(data.align, data.stagger)
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -438,8 +510,9 @@ local growers = {
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
           if i <= numVisible then
+            local width = getMinMaxSize(data, regionData, numVisible, "HORIZONTAL", true, frame ~= "" and frame or groupRegion:GetParent())
             newPositions[frame][regionData] = { x, y, true }
-            x = x - regionData.dimensions.width - space
+            x = x - width - space
             y = y - stagger
           end
         end
@@ -453,7 +526,7 @@ local growers = {
     local startX, startY = 0, 0
     local coeff = 1 - staggerCoefficient(data.align, stagger)
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -466,8 +539,9 @@ local growers = {
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
           if i <= numVisible then
+            local width = getMinMaxSize(data, regionData, numVisible, "HORIZONTAL", true, frame ~= "" and frame or groupRegion:GetParent())
             newPositions[frame][regionData] = { x, y, true }
-            x = x + (regionData.dimensions.width) + space
+            x = x + width + space
             y = y + stagger
           end
         end
@@ -481,7 +555,7 @@ local growers = {
     local startX, startY = 0, 0
     local coeff = 1 - staggerCoefficient(data.align, stagger)
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -494,9 +568,10 @@ local growers = {
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
           if i <= numVisible then
+            local _, height = getMinMaxSize(data, regionData, numVisible, "VERTICAL", true, frame ~= "" and frame or groupRegion:GetParent())
             newPositions[frame][regionData] = { x, y, true }
             x = x + stagger
-            y = y + (regionData.dimensions.height) + space
+            y = y + height + space
           end
         end
       end
@@ -509,7 +584,7 @@ local growers = {
     local startX, startY = 0, 0
     local coeff = staggerCoefficient(data.align, stagger)
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -522,9 +597,10 @@ local growers = {
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
           if i <= numVisible then
+            local _, height = getMinMaxSize(data, regionData, numVisible, "VERTICAL", true, frame ~= "" and frame or groupRegion:GetParent())
             newPositions[frame][regionData] = { x, y, true }
             x = x + stagger
-            y = y - (regionData.dimensions.height) - space
+            y = y - height - space
           end
         end
       end
@@ -536,7 +612,7 @@ local growers = {
     local limit = data.useLimit and data.limit or math.huge
     local midX, midY = 0, 0
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -548,15 +624,17 @@ local growers = {
         local totalWidth = (numVisible - 1) * space
         for i = 1, numVisible do
           local regionData = regionDatas[i]
-          totalWidth = totalWidth + (regionData.dimensions.width)
+          local width = getMinMaxSize(data, regionData, numVisible, "HORIZONTAL", false, frame ~= "" and frame or groupRegion:GetParent())
+          totalWidth = totalWidth + width
         end
         local x, y = midX - totalWidth/2, midY - (stagger * (numVisible - 1)/2)
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
           if i <= numVisible then
-            x = x + (regionData.dimensions.width) / 2
+            local width = getMinMaxSize(data, regionData, numVisible, "HORIZONTAL", true, frame ~= "" and frame or groupRegion:GetParent())
+            x = x + width / 2
             newPositions[frame][regionData] = { x, y, true }
-            x = x + (regionData.dimensions.width) / 2 + space
+            x = x + width / 2 + space
             y = y + stagger
           end
         end
@@ -569,7 +647,7 @@ local growers = {
     local limit = data.useLimit and data.limit or math.huge
     local midX, midY = 0, 0
     local anchorPerUnitFunc = data.useAnchorPerUnit and createAnchorPerUnitFunc(data)
-    return function(newPositions, activeRegions)
+    return function(newPositions, activeRegions, groupRegion)
       local frames = {}
       if anchorPerUnitFunc then
         anchorPerUnitFunc(frames, activeRegions)
@@ -581,16 +659,18 @@ local growers = {
         local totalHeight = (numVisible - 1) * space
         for i = 1, numVisible do
           local regionData = regionDatas[i]
-          totalHeight = totalHeight + (regionData.dimensions.height)
+          local _, height = getMinMaxSize(data, regionData, numVisible, "VERTICAL", false, frame ~= "" and frame or groupRegion:GetParent())
+          totalHeight = totalHeight + height
         end
         local x, y = midX - (stagger * (numVisible - 1)/2), midY - totalHeight/2
         newPositions[frame] = {}
         for i, regionData in ipairs(regionDatas) do
+          local _, height = getMinMaxSize(data, regionData, numVisible, "VERTICAL", true, frame ~= "" and frame or groupRegion:GetParent())
           if i <= numVisible then
-            y = y + (regionData.dimensions.height) / 2
+            y = y + height / 2
             newPositions[frame][regionData] = { x, y, true }
             x = x + stagger
-            y = y + (regionData.dimensions.height) / 2 + space
+            y = y + height / 2 + space
           end
         end
       end
@@ -1261,7 +1341,7 @@ local function modify(parent, region, data)
     local handledRegionData = {}
 
     local newPositions = {}
-    self.growFunc(newPositions, self.sortedChildren)
+    self.growFunc(newPositions, self.sortedChildren, self)
     if #newPositions > 0 then
       for index = 1, #newPositions do
         if type(newPositions[index]) == "table" then
