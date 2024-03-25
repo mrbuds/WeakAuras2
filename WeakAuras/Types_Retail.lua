@@ -7,11 +7,41 @@ local L = WeakAuras.L;
 
 local encounter_list = ""
 local zoneId_list = ""
-function Private.InitializeEncounterAndZoneLists()
+local encounterId_table
+
+function Private.InitializeEncounterTable()
+	if encounterId_table ~= nil then return end
+	encounterId_table = {}
 	local currTier = EJ_GetCurrentTier()
+	for tier = EJ_GetNumTiers() - 1, EJ_GetNumTiers() do -- include current season and current xpac
+		EJ_SelectTier(tier)
+		for _, inRaid in ipairs({false, true}) do
+			local instance_index = 1
+			local instance_id = EJ_GetInstanceByIndex(instance_index, inRaid)
+			while instance_id do
+				EJ_SelectInstance(instance_id)
+				local ej_index = 1
+				local boss, _, _, _, _, _, encounter_id = EJ_GetEncounterInfoByIndex(ej_index, instance_id)
+				while boss do
+					if encounter_id then
+						encounterId_table[encounter_id] = true
+					end
+					ej_index = ej_index + 1
+					boss, _, _, _, _, _, encounter_id = EJ_GetEncounterInfoByIndex(ej_index, instance_id)
+				end
+				instance_index = instance_index + 1
+				instance_id = EJ_GetInstanceByIndex(instance_index, inRaid)
+			end
+		end
+	end
+	EJ_SelectTier(currTier) -- restore previously selected tier
+end
+
+function Private.InitializeEncounterAndZoneLists()
   if encounter_list ~= "" then
     return
   end
+	local currTier = EJ_GetCurrentTier()
 	for tier = EJ_GetNumTiers(), EJ_GetNumTiers() do
 		EJ_SelectTier(tier)
 		local tierName = EJ_GetTierInfo(tier)
@@ -63,6 +93,10 @@ function Private.InitializeEncounterAndZoneLists()
 	EJ_SelectTier(currTier) -- restore previously selected tier
 
   encounter_list = encounter_list:sub(1, -3) .. "\n\n" .. L["Supports multiple entries, separated by commas\n"]
+end
+
+function Private.IsEncounterCurrentXPac(id)
+	return encounterId_table[id]
 end
 
 function Private.get_encounters_list()

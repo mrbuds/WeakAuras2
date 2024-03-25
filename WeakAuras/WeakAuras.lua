@@ -2909,6 +2909,27 @@ local oldDataStub2 = {
   conditions = {},
 }
 
+function Private.UpdateOldEncounterIcon(data)
+  Private.InitializeEncounterTable()
+  local show = false
+  if data.load.use_encounterid and type(data.load.encounterid) == "string" then
+    local includeAnOld, includeANew = false, false
+    for match in data.load.encounterid:gmatch("[%d]+") do
+      if Private.IsEncounterCurrentXPac(tonumber(match), debug) then
+        includeANew = true
+      else
+        includeAnOld = true
+      end
+    end
+    show = includeAnOld and not includeANew
+  end
+  if show then
+    Private.AuraWarnings.UpdateWarning(data.uid, "OldEncounter", "warning", L["This aura loads for an encounter not in current WoW expansion"])
+  else
+    Private.AuraWarnings.UpdateWarning(data.uid, "OldEncounter")
+  end
+end
+
 function Private.UpdateSoundIcon(data)
   local function testConditions()
     local sound, tts
@@ -3159,6 +3180,7 @@ local function pAdd(data, simpleChange)
     end
 
     Private.UpdateSoundIcon(data)
+    Private.UpdateOldEncounterIcon(data)
     Private.callbacks:Fire("Add", data.uid, data.id, data, simpleChange)
   end
 end
