@@ -4267,7 +4267,7 @@ function GenericTrigger.GetOverlayInfo(data, triggernum)
           count = variables.additionalProgress;
         end
       else
-        local allStates = {};
+        local allStates = setmetatable({}, Private.allstatesMetatable)
         Private.ActivateAuraEnvironment(data.id);
         RunTriggerFunc(allStates, events[data.id][triggernum], data.id, triggernum, "OPTIONS");
         Private.ActivateAuraEnvironment(nil);
