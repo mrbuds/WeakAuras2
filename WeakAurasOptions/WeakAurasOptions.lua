@@ -1022,7 +1022,6 @@ local previousFilter;
 local pendingUpdateButtons = {}
 local pendingInstallButtons = {}
 function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
-  print("SortDisplayButtons", "IsOptionsProcessingPaused", OptionsPrivate.Private.IsOptionsProcessingPaused())
   if (OptionsPrivate.Private.IsOptionsProcessingPaused()) then
     return;
   end
@@ -1164,12 +1163,6 @@ function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
   local topLevelLoadedAuras = {}
   local topLevelUnloadedAuras = {}
   local visible = {}
-
-  for id, data in ipairs(WeakAurasSaved.displays) do
-    if not data.parent then
-      -- OptionsPrivate.TreeData:Insert(id)
-    end
-  end
 
   --[[
   for id, child in pairs(displayButtons) do
@@ -1396,8 +1389,13 @@ function OptionsPrivate.PickDisplayMultipleShift(target)
 end
 
 function OptionsPrivate.GetDisplayButton(id)
-  if(id and displayButtons[id]) then
-    return displayButtons[id];
+  if not id then return end
+  local predicate = function(node)
+    return id == node:GetData()
+  end
+  local node = OptionsPrivate.TreeData:FindByPredicate(predicate, true)
+  if node then
+    return OptionsPrivate.ScrollBox:FindFrame(node)
   end
 end
 

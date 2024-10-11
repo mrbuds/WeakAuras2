@@ -938,7 +938,17 @@ local methods = {
     if(self.data.controlledChildren) then
       self.expand:Show()
       self.callbacks.UpdateExpandButton()
-      --self:SetOnExpandCollapse(function() OptionsPrivate.SortDisplayButtons(nil, true) end)
+      self:SetOnExpandCollapse(function()
+        if not self.expand.expanded then
+          for index, child in ipairs(self.data.controlledChildren) do
+            self.node:Insert(child)
+          end
+          self.expand.expanded = true
+        else
+          self.node:Flush()
+          self.expand.expanded = false
+        end
+      end)
     else
       self.expand:Hide()
     end
@@ -975,7 +985,7 @@ local methods = {
         error("Display \""..self.data.id.."\" thinks it is a member of group \""..self.data.parent.."\" which does not control it");
       end
     end
-    self:Hide()
+    self:UpdateIconsVisible()
   end,
   ["SetNormalTooltip"] = function(self)
     local data = self.data
@@ -1312,10 +1322,14 @@ local methods = {
     self.dgroup = group
     if(group) then
       self.icon:SetPoint("LEFT", self.ungroup, "RIGHT")
+      self.background:ClearAllPoints()
       self.background:SetPoint("LEFT", self.offset, "RIGHT")
+      self.background:SetPoint("TOPRIGHT", self, "TOPRIGHT")
+      self.background:SetPoint("BOTTOM", self, "BOTTOM")
     else
       self.icon:SetPoint("LEFT", self, "LEFT")
-      self.background:SetPoint("LEFT", self, "LEFT")
+      self.background:ClearAllPoints()
+      self.background:SetAllPoints(self)
     end
     self:UpdateIconsVisible()
     self:UpdateOffset()
@@ -1588,8 +1602,10 @@ local methods = {
       local parentButton = OptionsPrivate.GetDisplayButton(self.data.parent)
       parentButton:RecheckVisibility()
     else
+      --[[
       OptionsPrivate.Private.OptionsFrame().loadedButton:RecheckVisibility()
       OptionsPrivate.Private.OptionsFrame().unloadedButton:RecheckVisibility()
+      ]]
     end
   end,
   ["RecheckVisibility"] = function(self)
@@ -1962,6 +1978,7 @@ local function Constructor()
 end
 
 function WeakAurasDisplayButtonMixin:Init(node)
+  self.node = node
   self.hasThumbnail = false
   self.first = false
   self.last = false
@@ -1984,23 +2001,9 @@ function WeakAurasDisplayButtonMixin:Init(node)
   end)
   self.downgroup:SetScript("OnLeave", Hide_Tooltip)
 
-  self.expand.expanded = true
+  self.expand.expanded = false
   self.expand.disabled = true
-  self.expand.func = function()
-    if not self.expand.expanded then
-      if self.data.controlledChildren then
-        for leaf in OptionsPrivate.Private.TraverseLeafs(self.data) do
-          node:Insert(leaf.id)
-        end
-      end
-      self.expand.expanded = true
-    else
-      if self.data.controlledChildren then
-        node:Flush()
-      end
-      self.expand.expanded = false
-    end
-  end
+  self.expand.func = function() end
   self.expand.title = L["Disabled"]
   self.expand.desc = L["Expansion is disabled because this group has no children"]
   self.expand:SetScript("OnEnter", function() Show_Tooltip(self, self.expand.title, self.expand.desc) end)
