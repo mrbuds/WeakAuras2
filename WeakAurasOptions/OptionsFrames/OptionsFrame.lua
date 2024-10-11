@@ -582,7 +582,6 @@ function OptionsPrivate.CreateFrame()
   buttonsContainer.frame:SetPoint("TOP", frame, "TOP", 0, -67)
   buttonsContainer.frame:SetPoint("RIGHT", container.frame, "LEFT", -17)
   buttonsContainer.frame:Show()
-  buttonsContainer.content:GetParent():SetBackdropColor(0, 0, 0, 0)
   frame.buttonsContainer = buttonsContainer
 
   -- Toolbar
@@ -664,15 +663,15 @@ function OptionsPrivate.CreateFrame()
     self:UpdateFrameVisible()
   end
 
-  local ScrollBox = CreateFrame("Frame", nil, buttonsContainer.frame, "WowScrollBoxList")
-  ScrollBox:SetPoint("TOPLEFT", buttonsContainer.frame, "TOPLEFT", 10, -25)
-  ScrollBox:SetPoint("BOTTOMRIGHT", buttonsContainer.frame, "BOTTOMRIGHT", -20, 10)
+  local ScrollBox = CreateFrame("Frame", nil, buttonsContainer.content, "WowScrollBoxList")
+  ScrollBox:SetPoint("TOPLEFT", buttonsContainer.content, "TOPLEFT", 2, -2)
+  ScrollBox:SetPoint("BOTTOMRIGHT", buttonsContainer.content, "BOTTOMRIGHT", -15, 2)
   ScrollBox:Show()
   OptionsPrivate.ScrollBox = ScrollBox
 
-  local ScrollBar = CreateFrame("EventFrame", nil, buttonsContainer.frame, "MinimalScrollBar")
-  ScrollBar:SetPoint("TOPLEFT", ScrollBox, "TOPRIGHT")
-  ScrollBar:SetPoint("BOTTOMLEFT", ScrollBox, "BOTTOMRIGHT")
+  local ScrollBar = CreateFrame("EventFrame", nil, buttonsContainer.content, "MinimalScrollBar")
+  ScrollBar:SetPoint("TOPLEFT", buttonsContainer.content, "TOPRIGHT", -8, 0)
+  ScrollBar:SetPoint("BOTTOMLEFT", buttonsContainer.content, "BOTTOMRIGHT", -8, 0)
 
   OptionsPrivate.TreeData = CreateTreeDataProvider()
   OptionsPrivate.TreeData:SetSortComparator(function(a, b)
