@@ -310,6 +310,7 @@ function OptionsPrivate.CreateFrame()
           self.filterInput:Hide();
         else
           self.loadProgress:Hide()
+          print("show toolbarContainer")
           self.toolbarContainer:Show()
           self.filterInput:Show();
           --self.filterInputClear:Show();
@@ -333,7 +334,7 @@ function OptionsPrivate.CreateFrame()
     frame:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", right, top)
     frame:SetHeight(odb.frame and odb.frame.height or defaultHeight)
     frame:SetWidth(odb.frame and odb.frame.width or defaultWidth)
-    frame.buttonsScroll:DoLayout()
+    --frame.buttonsScroll:DoLayout()
     frame:UpdateFrameVisible()
   end)
   minimizebutton:SetOnMinimizedCallback(function()
@@ -663,7 +664,82 @@ function OptionsPrivate.CreateFrame()
     self:UpdateFrameVisible()
   end
 
+  local ScrollBox = CreateFrame("Frame", nil, buttonsContainer.frame, "WowScrollBoxList")
+  ScrollBox:SetPoint("TOPLEFT", buttonsContainer.frame, "TOPLEFT", 10, -25)
+  ScrollBox:SetPoint("BOTTOMRIGHT", buttonsContainer.frame, "BOTTOMRIGHT", -20, 10)
+  ScrollBox:Show()
 
+  local ScrollBar = CreateFrame("EventFrame", nil, buttonsContainer.frame, "MinimalScrollBar")
+  ScrollBar:SetPoint("TOPLEFT", ScrollBox, "TOPRIGHT")
+  ScrollBar:SetPoint("BOTTOMLEFT", ScrollBox, "BOTTOMRIGHT")
+
+  OptionsPrivate.TreeData = CreateTreeDataProvider()
+  local ScrollView = CreateScrollBoxListTreeListView()
+  ScrollView:SetDataProvider(OptionsPrivate.TreeData)
+
+  ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
+
+  --DevTool:AddData(ScrollBox, "ScrollBox")
+  function ScrollBox:InvokeInitializers()
+    local function SecureInvokeInitializer(frame, initializer)
+      self:InvokeInitializer(frame, initializer);
+    end
+    print("my InvokeInitializers")
+    --pcall(self.initializers, SecureInvokeInitializer);
+    self:InvokeInitializer(frame, self.initializers)
+    wipe(self.initializers);
+  end
+
+  local CallbackType = EnumUtil.MakeEnum("Closure", "Function");
+
+  -- temporary, try bypass error eating by secureexecuterange
+  function ScrollBox:TriggerEvent(event, ...)
+    if type(event) ~= "string" then
+      error("CallbackRegistryMixin:TriggerEvent 'event' requires string type.");
+    elseif not self.isUndefinedEventAllowed and not self.Event[event] then
+      error(string.format("CallbackRegistryMixin:TriggerEvent event '%s' doesn't exist.", event));
+    end
+
+    local closures = self:GetCallbacksByEvent(CallbackType.Closure, event);
+    if closures then
+      local function CallbackRegistryExecuteClosurePair(owner, closure, ...)
+        securecallfunction(closure, ...);
+      end
+
+      --pcall(closures, CallbackRegistryExecuteClosurePair, ...);
+      for k, v in pairs(closures) do
+        CallbackRegistryExecuteClosurePair(k, v, ...)
+      end
+    end
+
+    local funcs = self:GetCallbacksByEvent(CallbackType.Function, event);
+    if funcs then
+      local function CallbackRegistryExecuteOwnerPair(owner, func, ...)
+        securecallfunction(func, owner, ...);
+      end
+
+      --pcall(funcs, CallbackRegistryExecuteOwnerPair, ...);
+      for k, v in pairs(funcs) do
+        CallbackRegistryExecuteOwnerPair(k, v, ...)
+      end
+    end
+  end
+
+  local function Initializer(frame, node)
+    --local data = node:GetData() -- get our data from the node with :GetData()
+    frame:Init(node)
+    --button:SetScript("OnClick", function()
+    --    node:ToggleCollapsed()
+    --end)
+  end
+  local function Resetter(frame)
+    frame:OnRelease()
+  end
+
+  ScrollView:SetElementInitializer("WeakAurasDisplayButtonTemplate", Initializer)
+  ScrollView:SetElementResetter(Resetter)
+
+  --[[
   local buttonsScroll = AceGUI:Create("ScrollFrame")
   buttonsScroll:SetLayout("ButtonsScrollLayout")
   buttonsScroll.width = "fill"
@@ -717,7 +793,9 @@ function OptionsPrivate.CreateFrame()
 
     status.scrollvalue = status.offset / ((height - viewheight) / 1000.0)
   end
+  ]]
 
+  --[[
   -- Ready to Install section
   local pendingInstallButton = AceGUI:Create("WeakAurasLoadedHeaderButton")
   pendingInstallButton:SetText(L["Ready for Install"])
@@ -892,6 +970,7 @@ function OptionsPrivate.CreateFrame()
   unloadedButton:SetViewDescription(L["Toggle the visibility of all non-loaded displays"])
   unloadedButton.childButtons = {}
   frame.unloadedButton = unloadedButton
+]]
 
   -- Sidebar used for Dynamic Text Replacements
   local sidegroup = AceGUI:Create("WeakAurasInlineGroup")
@@ -1216,8 +1295,10 @@ function OptionsPrivate.CreateFrame()
     frame.pickedDisplay = nil
     frame.pickedOption = nil
     wipe(tempGroup.controlledChildren)
+    --[[
     loadedButton:ClearPick(noHide)
     unloadedButton:ClearPick(noHide)
+    ]]
     container:ReleaseChildren()
     self.moversizer:Hide()
 
@@ -1419,6 +1500,7 @@ function OptionsPrivate.CreateFrame()
     -- Always expand even if already picked
     ExpandParents(data)
 
+    --[[
     if OptionsPrivate.Private.loaded[id] ~= nil then
       -- Under loaded
       if not loadedButton:GetExpanded() then
@@ -1430,6 +1512,7 @@ function OptionsPrivate.CreateFrame()
         unloadedButton:Expand()
       end
     end
+    ]]
 
     if self.pickedDisplay == id and (self.pickedDisplay == tab or tab == nil) then
       return

@@ -701,10 +701,10 @@ local function LayoutDisplayButtons(msg)
     for _, id in pairs(unloadedSorted) do
       local data = WeakAuras.GetData(id);
       if(data) then
-        EnsureDisplayButton(data);
+        --EnsureDisplayButton(data);
         WeakAuras.UpdateThumbnail(data);
 
-        frame.buttonsScroll:AddChild(displayButtons[data.id]);
+        --frame.buttonsScroll:AddChild(displayButtons[data.id]);
 
         if (num % 50 == 0) then
           frame.buttonsScroll:ResumeLayout()
@@ -745,7 +745,7 @@ local function LayoutDisplayButtons(msg)
     for _, id in pairs(loadedSorted) do
       local data = WeakAuras.GetData(id);
       if(data) then
-        EnsureDisplayButton(data);
+        -- EnsureDisplayButton(data);
         WeakAuras.UpdateThumbnail(data);
 
         local button = displayButtons[data.id]
@@ -830,9 +830,15 @@ function WeakAuras.ShowOptions(msg)
 
   if (firstLoad) then
     frame = OptionsPrivate.CreateFrame();
-    frame.buttonsScroll.frame:Show();
+    for id, data in pairs(WeakAurasSaved.displays) do
+      if not data.parent then
+        OptionsPrivate.TreeData:Insert(id)
+      end
+    end
+    --frame.buttonsScroll.frame:Show();
 
-    LayoutDisplayButtons(msg);
+    -- LayoutDisplayButtons(msg);
+    frame:SetLoadProgressVisible(false)
   end
 
   if (frame:GetWidth() > GetScreenWidth()) then
@@ -843,7 +849,7 @@ function WeakAuras.ShowOptions(msg)
     frame:SetHeight(GetScreenHeight() - 50)
   end
 
-  frame.buttonsScroll.frame:Show();
+  --frame.buttonsScroll.frame:Show();
 
   if (frame.needsSort) then
     OptionsPrivate.SortDisplayButtons();
@@ -972,9 +978,9 @@ end
 function WeakAuras.NewDisplayButton(data, massEdit)
   local id = data.id;
   OptionsPrivate.Private.ScanForLoads({[id] = true});
-  EnsureDisplayButton(db.displays[id]);
+  -- EnsureDisplayButton(db.displays[id]);
   WeakAuras.UpdateThumbnail(db.displays[id]);
-  frame.buttonsScroll:AddChild(displayButtons[id]);
+  --frame.buttonsScroll:AddChild(displayButtons[id]);
   if not massEdit then
     OptionsPrivate.SortDisplayButtons()
   end
@@ -992,7 +998,7 @@ end
 
 function OptionsPrivate.UpdateButtonsScroll()
   if OptionsPrivate.Private.IsOptionsProcessingPaused() then return end
-  frame.buttonsScroll:DoLayout()
+  --frame.buttonsScroll:DoLayout()
 end
 
 local function addButton(button, aurasMatchingFilter, visible)
@@ -1016,6 +1022,7 @@ local previousFilter;
 local pendingUpdateButtons = {}
 local pendingInstallButtons = {}
 function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
+  print("SortDisplayButtons", "IsOptionsProcessingPaused", OptionsPrivate.Private.IsOptionsProcessingPaused())
   if (OptionsPrivate.Private.IsOptionsProcessingPaused()) then
     return;
   end
@@ -1031,6 +1038,7 @@ function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
   previousFilter = filter;
   filter = filter:lower();
 
+  --[[
   wipe(frame.buttonsScroll.children);
 
   local pendingInstallButtonShown = false
@@ -1146,8 +1154,9 @@ function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
   if not pendingUpdateButtonShown and frame.pendingUpdateButton then
     frame.pendingUpdateButton.frame:Hide()
   end
+]]
 
-  tinsert(frame.buttonsScroll.children, frame.loadedButton);
+  -- tinsert(frame.buttonsScroll.children, frame.loadedButton);
 
   local aurasMatchingFilter = {}
   local useTextFilter = filter ~= ""
@@ -1156,6 +1165,13 @@ function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
   local topLevelUnloadedAuras = {}
   local visible = {}
 
+  for id, data in ipairs(WeakAurasSaved.displays) do
+    if not data.parent then
+      -- OptionsPrivate.TreeData:Insert(id)
+    end
+  end
+
+  --[[
   for id, child in pairs(displayButtons) do
     if child.data.controlledChildren then
       local hasLoaded, hasStandBy, hasNotLoaded = 0, 0, 0
@@ -1258,6 +1274,7 @@ function OptionsPrivate.SortDisplayButtons(filter, overrideReset, id)
   if(recenter) then
     frame:CenterOnPicked();
   end
+  ]]
 end
 
 
@@ -1344,6 +1361,7 @@ function OptionsPrivate.PickDisplayMultipleShift(target)
           end
         elseif (firstData.parent == nil and targetData.parent == nil) then
           -- top-level
+          --[[
           for index, button in ipairs(frame.buttonsScroll.children) do
             if button.type == "WeakAurasDisplayButton" then
               local data = button.data;
@@ -1365,6 +1383,7 @@ function OptionsPrivate.PickDisplayMultipleShift(target)
               end
             end
           end
+          ]]
         end
         if #batchSelection > 0 then
           frame:PickDisplayBatch(batchSelection);
@@ -1383,9 +1402,14 @@ function OptionsPrivate.GetDisplayButton(id)
 end
 
 function OptionsPrivate.AddDisplayButton(data)
-  EnsureDisplayButton(data);
-  WeakAuras.UpdateThumbnail(data);
-  frame.buttonsScroll:AddChild(displayButtons[data.id]);
+  -- EnsureDisplayButton(data);
+  --WeakAuras.UpdateThumbnail(data);
+  --frame.buttonsScroll:AddChild(displayButtons[data.id]);
+  if not data.parent then
+    -- OptionsPrivate.TreeData:Insert(data.id)
+  else
+    -- find parent and maybe insert
+  end
 end
 
 function OptionsPrivate.StartGrouping(data)
