@@ -310,7 +310,6 @@ function OptionsPrivate.CreateFrame()
           self.filterInput:Hide();
         else
           self.loadProgress:Hide()
-          print("show toolbarContainer")
           self.toolbarContainer:Show()
           self.filterInput:Show();
           --self.filterInputClear:Show();
@@ -583,6 +582,7 @@ function OptionsPrivate.CreateFrame()
   buttonsContainer.frame:SetPoint("TOP", frame, "TOP", 0, -67)
   buttonsContainer.frame:SetPoint("RIGHT", container.frame, "LEFT", -17)
   buttonsContainer.frame:Show()
+  buttonsContainer.content:GetParent():SetBackdropColor(0, 0, 0, 0)
   frame.buttonsContainer = buttonsContainer
 
   -- Toolbar
@@ -668,12 +668,17 @@ function OptionsPrivate.CreateFrame()
   ScrollBox:SetPoint("TOPLEFT", buttonsContainer.frame, "TOPLEFT", 10, -25)
   ScrollBox:SetPoint("BOTTOMRIGHT", buttonsContainer.frame, "BOTTOMRIGHT", -20, 10)
   ScrollBox:Show()
+  OptionsPrivate.ScrollBox = ScrollBox
 
   local ScrollBar = CreateFrame("EventFrame", nil, buttonsContainer.frame, "MinimalScrollBar")
   ScrollBar:SetPoint("TOPLEFT", ScrollBox, "TOPRIGHT")
   ScrollBar:SetPoint("BOTTOMLEFT", ScrollBox, "BOTTOMRIGHT")
 
   OptionsPrivate.TreeData = CreateTreeDataProvider()
+  OptionsPrivate.TreeData:SetSortComparator(function(a, b)
+    return strcmputf8i(a.data, b.data) < 0
+  end)
+
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
 
@@ -1484,13 +1489,37 @@ function OptionsPrivate.CreateFrame()
     containerScroll:AddChild(importButton)
   end
 
-  local function ExpandParents(data)
+  local function ExpandAndReturnNode(data)
+    local rootNode = OptionsPrivate.TreeData
+    local lastNode, _
+
     if data.parent then
-      if not displayButtons[data.parent]:GetExpanded() then
-        displayButtons[data.parent]:Expand()
+      local Ids = {}
+      for parent in OptionsPrivate.Private.TraverseParents(data) do
+        table.insert(Ids, parent.id)
       end
-      local parentData = WeakAuras.GetData(data.parent)
-      ExpandParents(parentData)
+      table.insert(Ids, data.id)
+      for depth, parent in ipairs(Ids) do
+        local predicate = function(node)
+          return parent.id == node:GetData()
+        end
+        _, lastNode = rootNode:FindByPredicate(predicate, true)
+        if not lastNode then
+          lastNode = rootNode:Insert(parent)
+          rootNode = lastNode
+        end
+        if not lastNode:GetExpanded() then
+          lastNode:Expand()
+        end
+      end
+    else
+      local predicate = function(node)
+        return data.id == node:GetData()
+      end
+      _, lastNode = rootNode:FindByPredicate(predicate, true)
+    end
+    if lastNode then
+      return lastNode, OptionsPrivate.ScrollBox:FindFrame(lastNode)
     end
   end
 
@@ -1498,8 +1527,9 @@ function OptionsPrivate.CreateFrame()
     local data = WeakAuras.GetData(id)
 
     -- Always expand even if already picked
-    ExpandParents(data)
-
+    local node, button = ExpandAndReturnNode(data)
+    DevTool:AddData(node, "node")
+    DevTool:AddData(button, "button")
     --[[
     if OptionsPrivate.Private.loaded[id] ~= nil then
       -- Under loaded
@@ -1522,7 +1552,7 @@ function OptionsPrivate.CreateFrame()
 
     self:ClearPicks(noHide)
 
-    displayButtons[id]:Pick()
+    button:Pick()
     self.pickedDisplay = id
 
 
@@ -1532,18 +1562,22 @@ function OptionsPrivate.CreateFrame()
     self:FillOptions()
     WeakAuras.SetMoverSizer(id)
 
-    local _, _, _, _, yOffset = displayButtons[id].frame:GetPoint(1)
+    --[[
+    local _, _, _, _, yOffset = button:GetPoint(1)
     if not yOffset then
-      yOffset = displayButtons[id].frame.yOffset
+      yOffset = button.yOffset
     end
     if yOffset then
       self.buttonsScroll:SetScrollPos(yOffset, yOffset - 32)
     end
+    ]]
 
+    --[[
     for child in OptionsPrivate.Private.TraverseAllChildren(data) do
       displayButtons[child.id]:PriorityShow(1)
     end
-    displayButtons[data.id]:RecheckParentVisibility()
+    ]]
+    node:RecheckParentVisibility()
 
     OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
   end

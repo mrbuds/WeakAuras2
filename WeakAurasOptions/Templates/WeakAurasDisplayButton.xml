@@ -13,6 +13,32 @@
           <Anchor point="LEFT" relativeKey="$parent" relativePoint="LEFT"/>
         </Anchors>
       </Frame>
+    </Frames>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture parentKey="background" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="BLEND">
+          <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY">
+        <Texture parentKey="icon" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="ADD">
+          <Size x="32" y="32"/>
+          <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
+          <Anchors>
+            <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="RIGHT"/>
+          </Anchors>
+        </Texture>
+        <FontString parentKey="title" inherits="GameFontNormal" justifyH="LEFT">
+          <Size y="14"/>
+          <Anchors>
+            <Anchor point="TOP" relativeKey="$parent" relativePoint="TOP" x="0" y="-2"/>
+            <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT" x="2" y="0"/>
+            <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Frames>
       <Button parentKey="view">
         <Size x="16" y="16"/>
         <Anchors>
@@ -21,7 +47,7 @@
         <NormalTexture file="Interface/LFGFrame/BattlenetWorking4.blp">
           <TexCoords left="0.1" right="0.9" bottom="0.1" top="0.9"/>
         </NormalTexture>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <EditBox parentKey="renamebox" inherits="InputBoxTemplate" hidden="true">
         <Size y="14"/>
@@ -64,7 +90,7 @@
         <NormalTexture file="Interface/GLUES/CharacterCreate/UI-RotationRight-Big-Up.blp">
           <TexCoords left="0.15" right="0.85" bottom="0.15" top="0.85"/>
         </NormalTexture>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <Button parentKey="ungroup" hidden="true">
         <Size x="11" y="11"/>
@@ -76,7 +102,7 @@
             <Rect ULx="0.5" ULy="0" LLx="0.5" LLy="1" URx="1" URy="0" LRx="1" LRy="1"/>
           </TexCoords>
         </NormalTexture>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <Button parentKey="upgroup" hidden="true">
         <Size x="11" y="11"/>
@@ -88,7 +114,7 @@
             <Rect ULx="0.5" ULy="1" LLx="1" LLy="1" URx="0.5" URy="0" LRx="1" LRy="0"/>
           </TexCoords>
         </NormalTexture>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <Button parentKey="downgroup" hidden="true">
         <Size x="11" y="11"/>
@@ -100,49 +126,25 @@
             <Rect ULx="1" ULy="0" LLx="0.5" LLy="0" URx="1" URy="1" LRx="0.5" LRy="1"/>
           </TexCoords>
         </NormalTexture>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <Button parentKey="expand">
         <Size x="16" y="16"/>
         <Anchors>
           <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="BOTTOM"/>
-          <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="LEFT" x="32" y="0"/>
+          <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT"/>
         </Anchors>
         <NormalTexture file="Interface/BUTTONS/UI-MinusButton-Up.blp"/>
         <PushedTexture file="Interface/BUTTONS/UI-MinusButton-Down.blp"/>
-        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
       </Button>
       <Frame parentKey="statusIcons">
         <Size x="1" y="1"/>
         <Anchors>
           <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="BOTTOM" x="0" y="1"/>
-          <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="LEFT" x="32" y="0"/>
+          <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT"/>
         </Anchors>
       </Frame>
     </Frames>
-    <Layers>
-      <Layer level="BACKGROUND">
-        <Texture parentKey="background" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" setAllPoints="true" alphaMode="ADD">
-          <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
-        </Texture>
-      </Layer>
-      <Layer level="OVERLAY">
-        <Texture parentKey="icon" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="ADD">
-          <Size x="32" y="32"/>
-          <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
-          <Anchors>
-            <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="RIGHT"/>
-          </Anchors>
-        </Texture>
-        <FontString parentKey="title" inherits="GameFontNormal" justifyH="LEFT">
-          <Size y="14"/>
-          <Anchors>
-            <Anchor point="TOP" relativeKey="$parent" relativePoint="TOP" x="0" y="-2"/>
-            <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT" x="2" y="0"/>
-            <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT"/>
-          </Anchors>
-        </FontString>
-      </Layer>
-    </Layers>
   </Button>
 </Ui>
