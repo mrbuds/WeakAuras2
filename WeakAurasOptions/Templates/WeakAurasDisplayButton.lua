@@ -712,11 +712,12 @@ local methods = {
             self:SetGroupOrder(index - 1, #parentData.controlledChildren);
             local otherbutton = OptionsPrivate.GetDisplayButton(parentData.controlledChildren[index]);
             otherbutton:SetGroupOrder(index, #parentData.controlledChildren);
-            OptionsPrivate.SortDisplayButtons();
+            --OptionsPrivate.SortDisplayButtons();
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
             OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index-1]).uid, "main", updata, self, true, function() OptionsPrivate.SortDisplayButtons() end);
             OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", downdata, otherbutton, true, function() OptionsPrivate.SortDisplayButtons() end);
+            WeakAuras.UpdateGroupOrders(parentData)
             WeakAuras.FillOptions()
           end
         else
@@ -751,11 +752,11 @@ local methods = {
             self:SetGroupOrder(index + 1, #parentData.controlledChildren);
             local otherbutton = OptionsPrivate.GetDisplayButton(parentData.controlledChildren[index]);
             otherbutton:SetGroupOrder(index, #parentData.controlledChildren);
-            OptionsPrivate.SortDisplayButtons()
+            --OptionsPrivate.SortDisplayButtons()
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index+1]).uid, "main", downdata, self, true, function() OptionsPrivate.SortDisplayButtons() end);
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", updata, otherbutton, true, function() OptionsPrivate.SortDisplayButtons() end);
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index+1]).uid, "main", downdata, self, true, function() WeakAuras.UpdateGroupOrders(parentData) end);
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", updata, otherbutton, true, function() WeakAuras.UpdateGroupOrders(parentData) end);
             WeakAuras.FillOptions()
           end
         else
@@ -941,7 +942,8 @@ local methods = {
       self:SetOnExpandCollapse(function()
         if not self.expand.expanded then
           for index, child in ipairs(self.data.controlledChildren) do
-            self.node:Insert(child)
+            print("insert", child)
+            self.node:Insert({id = child, index = index})
           end
           self.expand.expanded = true
         else
@@ -971,19 +973,18 @@ local methods = {
     self.view:SetScript("OnClick", self.callbacks.OnViewClick)
     if self.data.parent then
       local parentData = WeakAuras.GetData(self.data.parent)
-      local index;
-      for childIndex, childId in pairs(parentData.controlledChildren) do
-        if(childId == self.data.id) then
-          index = childIndex
-          break;
-        end
-      end
+      local index = tIndexOf(parentData.controlledChildren, self.data.id)
       if(index) then
         self:SetGroup(self.data.parent)
         self:SetGroupOrder(index, #parentData.controlledChildren)
       else
         error("Display \""..self.data.id.."\" thinks it is a member of group \""..self.data.parent.."\" which does not control it");
       end
+    end
+    if self.node.data.picked then
+      self:Pick()
+    else
+      self:ClearPick(true)
     end
     self:UpdateIconsVisible()
   end,
@@ -1125,7 +1126,7 @@ local methods = {
       WeakAuras.UpdateGroupOrders(newParent)
     end
     WeakAuras.ClearAndUpdateOptions(self.data.id)
-    WeakAuras.UpdateGroupOrders(parentData);
+    WeakAuras.UpdateGroupOrders(parentData)
     local parentButton = OptionsPrivate.GetDisplayButton(parentData.id)
     if(#parentData.controlledChildren == 0) then
       parentButton:DisableExpand()
@@ -1536,11 +1537,13 @@ local methods = {
     return OptionsPrivate.Private.loaded[self.data.id] == nil
   end,
   ["Pick"] = function(self)
+    self.node.data.picked = true
     self:LockHighlight()
     self:PriorityShow(1)
     self:RecheckParentVisibility()
   end,
   ["ClearPick"] = function(self, noHide)
+    self.node.data.picked = nil
     self:UnlockHighlight()
     if not noHide then
       self:PriorityHide(1);
@@ -1777,206 +1780,6 @@ local methods = {
 Constructor
 -------------------------------------------------------------------------------]]
 
-local function Constructor()
-  local name = "WeakAurasDisplayButton"..AceGUI:GetNextWidgetNum(Type);
-  ---@class Button
-  local button = CreateFrame("Button", name, UIParent, "OptionsListButtonTemplate");
-  button:SetHeight(32);
-  button:SetWidth(1000);
-  button.dgroup = nil;
-  button.data = {};
-
-  local offset = CreateFrame("Frame", nil, button)
-  button.offset = offset
-  offset:SetPoint("TOP", button, "TOP");
-  offset:SetPoint("BOTTOM", button, "BOTTOM");
-  offset:SetPoint("LEFT", button, "LEFT");
-  offset:SetWidth(1)
-
-  local background = button:CreateTexture(nil, "BACKGROUND");
-  button.background = background;
-  background:SetTexture("Interface\\BUTTONS\\UI-Listbox-Highlight2.blp");
-  background:SetBlendMode("ADD");
-  background:SetVertexColor(0.5, 0.5, 0.5, 0.25);
-  background:SetPoint("TOP", button, "TOP");
-  background:SetPoint("BOTTOM", button, "BOTTOM");
-  background:SetPoint("LEFT", button, "LEFT")
-  background:SetPoint("RIGHT", button, "RIGHT");
-
-  local icon = button:CreateTexture(nil, "OVERLAY");
-  button.icon = icon;
-  icon:SetWidth(32);
-  icon:SetHeight(32);
-  icon:SetPoint("LEFT", offset, "RIGHT");
-
-  local title = button:CreateFontString(nil, "OVERLAY", "GameFontNormal");
-  button.title = title;
-  title:SetHeight(14);
-  title:SetJustifyH("LEFT");
-  title:SetPoint("TOP", button, "TOP", 0, -2);
-  title:SetPoint("LEFT", icon, "RIGHT", 2, 0);
-  title:SetPoint("RIGHT", button, "RIGHT");
-
-  button.description = {};
-
-  ---@class Button
-  local view = CreateFrame("Button", nil, button);
-  button.view = view;
-  view:SetWidth(16);
-  view:SetHeight(16);
-  view:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 0);
-  local viewTexture = view:CreateTexture()
-  view.texture = viewTexture;
-  viewTexture:SetTexture("Interface\\LFGFrame\\BattlenetWorking4.blp");
-  viewTexture:SetTexCoord(0.1, 0.9, 0.1, 0.9);
-  viewTexture:SetAllPoints(view);
-  view:SetNormalTexture(viewTexture);
-  view:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  view:SetScript("OnEnter", function() Show_Tooltip(button, L["View"], L["Toggle the visibility of this display"]) end);
-  view:SetScript("OnLeave", Hide_Tooltip);
-
-  view.visibility = 0;
-
-  local renamebox = CreateFrame("EditBox", nil, button, "InputBoxTemplate");
-  renamebox:SetHeight(14);
-  renamebox:SetPoint("TOP", button, "TOP");
-  renamebox:SetPoint("LEFT", icon, "RIGHT", 6, 0);
-  renamebox:SetPoint("RIGHT", button, "RIGHT", -4, 0);
-  renamebox:SetFont(STANDARD_TEXT_FONT, 10, "");
-  renamebox:Hide();
-
-  renamebox.func = function() --[[By default, do nothing!]] end;
-  renamebox:SetScript("OnEnterPressed", function()
-    local oldid = button.title:GetText();
-    local newid = renamebox:GetText();
-    if(newid == "" or (newid ~= oldid and WeakAuras.GetData(newid))) then
-      renamebox:SetText(button.title:GetText());
-    else
-      renamebox.func();
-      title:SetText(renamebox:GetText());
-      title:Show();
-      renamebox:Hide();
-    end
-  end);
-
-  renamebox:SetScript("OnEscapePressed", function()
-    title:Show();
-    renamebox:Hide();
-  end);
-
-  local group = CreateFrame("Button", nil, button);
-  button.group = group;
-  group:SetWidth(16);
-  group:SetHeight(16);
-  group:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -18, 0);
-  local grouptexture = group:CreateTexture(nil, "OVERLAY");
-  group.texture = grouptexture;
-  grouptexture:SetTexture("Interface\\GLUES\\CharacterCreate\\UI-RotationRight-Big-Up.blp");
-  grouptexture:SetTexCoord(0.15, 0.85, 0.15, 0.85);
-  grouptexture:SetAllPoints(group);
-  group:SetNormalTexture(grouptexture);
-  group:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  group:SetScript("OnEnter", function() Show_Tooltip(button, L["Group (verb)"], L["Put this display in a group"]) end);
-  group:SetScript("OnLeave", Hide_Tooltip);
-
-  local ungroup = CreateFrame("Button", nil, button);
-  button.ungroup = ungroup;
-  ungroup:SetWidth(11);
-  ungroup:SetHeight(11);
-  ungroup:SetPoint("LEFT", offset, "RIGHT", 0, 0);
-  local ungrouptexture = group:CreateTexture(nil, "OVERLAY");
-  ungrouptexture:SetTexture("Interface\\MoneyFrame\\Arrow-Left-Down.blp");
-  ungrouptexture:SetTexCoord(0.5, 0, 0.5, 1, 1, 0, 1, 1);
-  ungrouptexture:SetAllPoints(ungroup);
-  ungroup:SetNormalTexture(ungrouptexture);
-  ungroup:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  ungroup:SetScript("OnEnter", function() Show_Tooltip(button, L["Ungroup"], L["Remove this display from its group"]) end);
-  ungroup:SetScript("OnLeave", Hide_Tooltip);
-  ungroup:Hide();
-
-  local upgroup = CreateFrame("Button", nil, button);
-  button.upgroup = upgroup;
-  upgroup:SetWidth(11);
-  upgroup:SetHeight(11);
-  upgroup:SetPoint("TOPLEFT", offset, "TOPRIGHT", 0, 0);
-  local upgrouptexture = group:CreateTexture(nil, "OVERLAY");
-  upgroup.texture = upgrouptexture;
-  upgrouptexture:SetTexture("Interface\\MoneyFrame\\Arrow-Left-Down.blp");
-  upgrouptexture:SetTexCoord(0.5, 1, 1, 1, 0.5, 0, 1, 0);
-  upgrouptexture:SetVertexColor(1, 1, 1);
-  upgrouptexture:SetAllPoints(upgroup);
-  upgroup:SetNormalTexture(upgrouptexture);
-  upgroup:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  upgroup:SetScript("OnEnter", function() Show_Tooltip(button, L["Move Up"], L["Move this display up in its group's order"]) end);
-  upgroup:SetScript("OnLeave", Hide_Tooltip);
-  upgroup:Hide();
-
-  local downgroup = CreateFrame("Button", nil, button);
-  button.downgroup = downgroup;
-  downgroup:SetWidth(11);
-  downgroup:SetHeight(11);
-  downgroup:SetPoint("BOTTOMLEFT", offset, "BOTTOMRIGHT", 0, 0);
-  local downgrouptexture = group:CreateTexture(nil, "OVERLAY");
-  downgroup.texture = downgrouptexture;
-  downgrouptexture:SetTexture("Interface\\MoneyFrame\\Arrow-Left-Down.blp");
-  downgrouptexture:SetTexCoord(1, 0, 0.5, 0, 1, 1, 0.5, 1);
-  downgrouptexture:SetAllPoints(downgroup);
-  downgroup:SetNormalTexture(downgrouptexture);
-  downgroup:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  downgroup:SetScript("OnEnter", function()
-    Show_Tooltip(button, L["Move Down"], L["Move this display down in its group's order"])
-  end)
-  downgroup:SetScript("OnLeave", Hide_Tooltip);
-  downgroup:Hide();
-
-  ---@class Button
-  local expand = CreateFrame("Button", nil, button);
-  button.expand = expand;
-  expand.expanded = true;
-  expand.disabled = true;
-  expand.func = function() end;
-  expand:SetNormalTexture("Interface\\BUTTONS\\UI-PlusButton-Disabled.blp");
-  expand:Disable();
-  expand:SetWidth(16);
-  expand:SetHeight(16);
-  expand:SetPoint("BOTTOM", button, "BOTTOM");
-  expand:SetPoint("LEFT", icon, "RIGHT", 0, 0);
-  expand:SetHighlightTexture("Interface\\BUTTONS\\UI-Panel-MinimizeButton-Highlight.blp");
-  expand.title = L["Disabled"];
-  expand.desc = L["Expansion is disabled because this group has no children"];
-  expand:SetScript("OnEnter", function() Show_Tooltip(button, expand.title, expand.desc) end);
-  expand:SetScript("OnLeave", Hide_Tooltip);
-
-  local statusIcons = CreateFrame("Frame", nil, button);
-  button.statusIcons = statusIcons
-  statusIcons:SetPoint("BOTTOM", button, "BOTTOM", 0, 1);
-  statusIcons:SetPoint("LEFT", icon, "RIGHT");
-  statusIcons:SetSize(1,1)
-  statusIcons.buttons = {}
-
-  local widget = {
-    frame = button,
-    title = title,
-    icon = icon,
-    view = view,
-    renamebox = renamebox,
-    group = group,
-    ungroup = ungroup,
-    upgroup = upgroup,
-    downgroup = downgroup,
-    background = background,
-    expand = expand,
-    statusIcons = statusIcons,
-    type = Type,
-    offset = offset
-  }
-  for method, func in pairs(methods) do
-    widget[method] = func
-  end
-
-  return AceGUI:RegisterAsWidget(widget);
-end
-
 function WeakAurasDisplayButtonMixin:Init(node)
   self.node = node
   self.hasThumbnail = false
@@ -2015,8 +1818,8 @@ function WeakAurasDisplayButtonMixin:Init(node)
     self[method] = func
   end
 
-  local id = node:GetData()
-  self:SetData(WeakAuras.GetData(id))
+  local nodeData = node:GetData()
+  self:SetData(WeakAuras.GetData(nodeData.id))
   self:Initialize()
   self:UpdateWarning()
   self:AcquireThumbnail()

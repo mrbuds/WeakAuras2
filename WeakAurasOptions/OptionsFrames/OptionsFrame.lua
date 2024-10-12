@@ -675,8 +675,12 @@ function OptionsPrivate.CreateFrame()
 
   OptionsPrivate.TreeData = CreateTreeDataProvider()
   OptionsPrivate.TreeData:SetSortComparator(function(a, b)
-    return strcmputf8i(a.data, b.data) < 0
-  end)
+    if a:GetDepth() == 1 then
+      return strcmputf8i(a.data.id, b.data.id) < 0
+    else
+      return (a.data.index or 0) < (b.data.index or 0)
+    end
+  end, true)
 
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
@@ -1282,12 +1286,19 @@ function OptionsPrivate.CreateFrame()
 
   frame.ClearPicks = function(self, noHide)
     local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
-    for id, button in pairs(displayButtons) do
-      button:ClearPick(true)
-      if not noHide then
-        button:PriorityHide(1)
+    OptionsPrivate.TreeData:ForEach(function(node)
+      if node.data.picked then
+        local button = OptionsPrivate.SearchNodeButton(node)
+        if button then
+          button:ClearPick(true)
+          if not noHide then
+            button:PriorityHide(1)
+          end
+        else
+          node.data.picked = nil
+        end
       end
-    end
+    end, false)
     if not noHide then
       for id, button in pairs(displayButtons) do
         if button.data.controlledChildren then
@@ -1488,47 +1499,12 @@ function OptionsPrivate.CreateFrame()
     containerScroll:AddChild(importButton)
   end
 
-  local function ExpandAndReturnNode(data)
-    local rootNode = OptionsPrivate.TreeData
-    local lastNode, _
-
-    if data.parent then
-      local Ids = {}
-      for parent in OptionsPrivate.Private.TraverseParents(data) do
-        table.insert(Ids, parent.id)
-      end
-      table.insert(Ids, data.id)
-      for depth, parent in ipairs(Ids) do
-        local predicate = function(node)
-          return parent.id == node:GetData()
-        end
-        _, lastNode = rootNode:FindByPredicate(predicate, true)
-        if not lastNode then
-          lastNode = rootNode:Insert(parent)
-          rootNode = lastNode
-        end
-        if not lastNode:GetExpanded() then
-          lastNode:Expand()
-        end
-      end
-    else
-      local predicate = function(node)
-        return data.id == node:GetData()
-      end
-      _, lastNode = rootNode:FindByPredicate(predicate, true)
-    end
-    if lastNode then
-      return lastNode, OptionsPrivate.ScrollBox:FindFrame(lastNode)
-    end
-  end
-
   frame.PickDisplay = function(self, id, tab, noHide)
     local data = WeakAuras.GetData(id)
 
     -- Always expand even if already picked
-    local node, button = ExpandAndReturnNode(data)
-    DevTool:AddData(node, "node")
-    DevTool:AddData(button, "button")
+    local button = OptionsPrivate.GetDisplayButton(data.id)
+
     --[[
     if OptionsPrivate.Private.loaded[id] ~= nil then
       -- Under loaded
@@ -1576,11 +1552,12 @@ function OptionsPrivate.CreateFrame()
       displayButtons[child.id]:PriorityShow(1)
     end
     ]]
-    node:RecheckParentVisibility()
+    button:RecheckParentVisibility()
 
     OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
   end
 
+  --[[
   frame.CenterOnPicked = function(self)
     if self.pickedDisplay then
       local centerId = type(self.pickedDisplay) == "string" and self.pickedDisplay or self.pickedDisplay.controlledChildren[1]
@@ -1596,6 +1573,7 @@ function OptionsPrivate.CreateFrame()
       end
     end
   end
+  ]]
 
   frame.PickDisplayMultiple = function(self, id)
     if not self.pickedDisplay then
@@ -1613,7 +1591,10 @@ function OptionsPrivate.CreateFrame()
         self:PickDisplay(id)
       elseif not OptionsPrivate.IsDisplayPicked(id) then
         self.pickedDisplay = tempGroup
-        displayButtons[id]:Pick()
+        local button = OptionsPrivate.GetDisplayButton(id)
+        if button then
+          button:Pick()
+        end
         tinsert(tempGroup.controlledChildren, id)
         OptionsPrivate.ClearOptions(tempGroup.id)
         self:FillOptions()
@@ -1629,7 +1610,10 @@ function OptionsPrivate.CreateFrame()
 
     for _, id in ipairs(batchSelection) do
       if not alreadySelected[id] then
-        displayButtons[id]:Pick()
+        local button = OptionsPrivate.GetDisplayButton(id)
+        if button then
+          button:Pick()
+        end
         tinsert(tempGroup.controlledChildren, id)
       end
     end

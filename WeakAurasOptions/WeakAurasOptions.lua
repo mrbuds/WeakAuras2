@@ -503,11 +503,13 @@ end
 
 local function OnAboutToDelete(event, uid, id, parentUid, parentId)
   local data = OptionsPrivate.Private.GetDataByUID(uid)
+  local node = OptionsPrivate.SearchDisplayNode(id)
   if(data.controlledChildren) then
     for index, childId in pairs(data.controlledChildren) do
-      local childButton = displayButtons[childId];
-      if(childButton) then
-        childButton:SetGroup();
+      if node then
+        if OptionsPrivate.SearchDisplayNode(childId, node) then
+          OptionsPrivate.GetDisplayButton(childId):SetGroup()
+        end
       end
       local childData = db.displays[childId];
       if(childData) then
@@ -521,9 +523,9 @@ local function OnAboutToDelete(event, uid, id, parentUid, parentId)
 
   frame:ClearPicks();
 
-  if(displayButtons[id])then
-    frame.buttonsScroll:DeleteChild(displayButtons[id]);
-    displayButtons[id] = nil;
+  if node then
+    local parent = node:GetParent()
+    parent:Remove(node)
   end
 
   collapsedOptions[id] = nil
@@ -531,25 +533,20 @@ end
 
 local function OnRename(event, uid, oldid, newid)
   local data = OptionsPrivate.Private.GetDataByUID(uid)
+  local oldNode = OptionsPrivate.GetDisplayNode(oldid)
+  local parentNode = oldNode:GetParent()
 
-  OptionsPrivate.displayButtons[newid] = OptionsPrivate.displayButtons[oldid];
-  OptionsPrivate.displayButtons[newid]:SetData(data)
-  OptionsPrivate.displayButtons[oldid] = nil;
+  parentNode:Insert({id = newid})
   OptionsPrivate.ClearOptions(oldid)
-
-  OptionsPrivate.displayButtons[newid]:SetTitle(newid);
-
   collapsedOptions[newid] = collapsedOptions[oldid]
   collapsedOptions[oldid] = nil
-
   if(data.controlledChildren) then
     for _, childId in pairs(data.controlledChildren) do
-      OptionsPrivate.displayButtons[childId]:SetGroup(newid)
+      OptionsPrivate.GetDisplayButton(childId):SetGroup(newid)
     end
   end
-
+  parentNode:Remove(oldNode)
   OptionsPrivate.StopGrouping()
-  OptionsPrivate.SortDisplayButtons()
 
   frame:OnRename(uid, oldid, newid)
 
@@ -626,20 +623,6 @@ function WeakAuras.IsOptionsOpen()
     return true;
   else
     return false;
-  end
-end
-
-local function EnsureDisplayButton(data)
-  local id = data.id;
-  if not(displayButtons[id]) then
-    displayButtons[id] = AceGUI:Create("WeakAurasDisplayButton");
-    if(displayButtons[id]) then
-      displayButtons[id]:SetData(data);
-      displayButtons[id]:Initialize();
-      displayButtons[id]:UpdateWarning()
-    else
-      print("|cFF8800FFWeakAuras|r: Error creating button for", id);
-    end
   end
 end
 
@@ -812,7 +795,7 @@ function OptionsPrivate.DeleteAuras(auras, parents)
       end
     end
     OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
-    OptionsPrivate.SortDisplayButtons(nil, true)
+    --OptionsPrivate.SortDisplayButtons(nil, true)
 
     frame:SetLoadProgressVisible(false)
   end
@@ -832,7 +815,7 @@ function WeakAuras.ShowOptions(msg)
     frame = OptionsPrivate.CreateFrame();
     for id, data in pairs(WeakAurasSaved.displays) do
       if not data.parent then
-        OptionsPrivate.TreeData:Insert(id)
+        OptionsPrivate.TreeData:Insert({id = id})
       end
     end
     --frame.buttonsScroll.frame:Show();
@@ -977,28 +960,33 @@ end
 
 function WeakAuras.NewDisplayButton(data, massEdit)
   local id = data.id;
+  print("WeakAuras.NewDisplayButton", id)
   OptionsPrivate.Private.ScanForLoads({[id] = true});
-  -- EnsureDisplayButton(db.displays[id]);
-  WeakAuras.UpdateThumbnail(db.displays[id]);
-  --frame.buttonsScroll:AddChild(displayButtons[id]);
-  if not massEdit then
-    OptionsPrivate.SortDisplayButtons()
+  if not data.parent then
+    OptionsPrivate.TreeData:Insert({id = id})
+  else
+    local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
+    local parentData = WeakAuras.GetData(data.parent)
+    local index = tIndexOf(parentData.controlledChildren, id)
+    parentNode:Insert({id = id, index = index})
   end
+  -- EnsureDisplayButton(db.displays[id]);
+  --WeakAuras.UpdateThumbnail(db.displays[id]);
+  --frame.buttonsScroll:AddChild(displayButtons[id]);
+  --if not massEdit then
+  --  OptionsPrivate.SortDisplayButtons()
+  --end
 end
 
 function WeakAuras.UpdateGroupOrders(data)
+  print("WeakAuras.UpdateGroupOrders")
   if(data.controlledChildren) then
     local total = #data.controlledChildren;
-    for index, id in pairs(data.controlledChildren) do
-      local button = OptionsPrivate.GetDisplayButton(id);
-      button:SetGroupOrder(index, total);
+    for index, id in ipairs(data.controlledChildren) do
+      local node = OptionsPrivate.GetDisplayNode(id)
+      node.data.index = index
     end
   end
-end
-
-function OptionsPrivate.UpdateButtonsScroll()
-  if OptionsPrivate.Private.IsOptionsProcessingPaused() then return end
-  --frame.buttonsScroll:DoLayout()
 end
 
 local function addButton(button, aurasMatchingFilter, visible)
@@ -1294,13 +1282,14 @@ end
 
 function WeakAuras.PickDisplay(id, tab, noHide)
   frame:PickDisplay(id, tab, noHide)
-  OptionsPrivate.UpdateButtonsScroll()
 end
 
 function OptionsPrivate.PickAndEditDisplay(id)
-  frame:PickDisplay(id);
-  OptionsPrivate.UpdateButtonsScroll()
-  displayButtons[id].callbacks.OnRenameClick();
+  frame:PickDisplay(id)
+  local button = OptionsPrivate.GetDisplayButton(id)
+  if button then
+    button.callbacks.OnRenameClick()
+  end
 end
 
 function OptionsPrivate.ClearPick(id)
@@ -1388,27 +1377,76 @@ function OptionsPrivate.PickDisplayMultipleShift(target)
   end
 end
 
+---returns node for an auraID if it's in the tree
+---@param id auraId
+---@param parentNode? node
+---@return node?
+function OptionsPrivate.SearchDisplayNode(id, parentNode)
+  local predicate = function(node)
+    return id == node:GetData().id
+  end
+  parentNode = parentNode or OptionsPrivate.TreeData
+  local _, node = parentNode:FindByPredicate(predicate, true)
+  return node
+end
+
+---@param node
+---@return button?
+function OptionsPrivate.SearchNodeButton(node)
+  return OptionsPrivate.ScrollBox:FindFrame(node)
+end
+
+function OptionsPrivate.GetDisplayNode(id)
+  local node = OptionsPrivate.SearchDisplayNode(id)
+  if not node then
+    local data = WeakAuras.GetData(id)
+    if data then
+      local lastNode
+      local parents = {}
+      for parent in OptionsPrivate.Private.TraverseParents(data) do
+        table.insert(parents, parent)
+      end
+      for _, parent in ipairs_reverse(parents) do
+        local parentNode = OptionsPrivate.SearchDisplayNode(parent.id, lastNode)
+        local parentButton = OptionsPrivate.SearchNodeButton(parentNode)
+        if parentButton then
+          parentButton:Expand()
+        end
+        lastNode = parentNode
+      end
+      node = OptionsPrivate.SearchDisplayNode(id)
+    end
+  end
+  return node
+end
+
 function OptionsPrivate.GetDisplayButton(id)
   if not id then return end
-  local predicate = function(node)
-    return id == node:GetData()
-  end
-  local node = OptionsPrivate.TreeData:FindByPredicate(predicate, true)
+  local node = OptionsPrivate.GetDisplayNode(id)
   if node then
-    return OptionsPrivate.ScrollBox:FindFrame(node)
+    local button = OptionsPrivate.ScrollBox:FindFrame(node)
+    if button then
+      return button
+    else
+      local predicate = function(elementData)
+        return elementData:GetData().id == id
+      end
+      OptionsPrivate.ScrollBox:ScrollToElementDataByPredicate(predicate, ScrollBoxConstants.AlignCenter)
+      return OptionsPrivate.ScrollBox:FindFrame(node)
+    end
   end
 end
 
+--[[
 function OptionsPrivate.AddDisplayButton(data)
-  -- EnsureDisplayButton(data);
-  --WeakAuras.UpdateThumbnail(data);
-  --frame.buttonsScroll:AddChild(displayButtons[data.id]);
   if not data.parent then
-    -- OptionsPrivate.TreeData:Insert(data.id)
+    OptionsPrivate.TreeData:Insert({id = data.id})
   else
-    -- find parent and maybe insert
+    local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
+    parentNode:Insert({id = data.id})
   end
 end
+]]
 
 function OptionsPrivate.StartGrouping(data)
   if not data then
@@ -1473,9 +1511,8 @@ end
 
 function OptionsPrivate.DragReset()
   for _, button in pairs(displayButtons) do
-    button:DragReset();
+    button:DragReset()
   end
-  OptionsPrivate.UpdateButtonsScroll()
 end
 
 local function CompareButtonOrder(a, b)
@@ -1600,7 +1637,6 @@ function OptionsPrivate.Drop(mainAura, target, action, area)
     coroutine.yield()
     frame:SetLoadProgressVisible(false)
     OptionsPrivate.SortDisplayButtons()
-    OptionsPrivate.UpdateButtonsScroll()
     WeakAuras.FillOptions()
   end
 
@@ -1650,7 +1686,6 @@ function OptionsPrivate.StartDrag(mainAura)
       end
     end
   end
-  OptionsPrivate.UpdateButtonsScroll()
 end
 
 function OptionsPrivate.DropIndicator()
