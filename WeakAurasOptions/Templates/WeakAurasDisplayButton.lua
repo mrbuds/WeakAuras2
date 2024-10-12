@@ -715,9 +715,8 @@ local methods = {
             --OptionsPrivate.SortDisplayButtons();
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index-1]).uid, "main", updata, self, true, function() OptionsPrivate.SortDisplayButtons() end);
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", downdata, otherbutton, true, function() OptionsPrivate.SortDisplayButtons() end);
-            WeakAuras.UpdateGroupOrders(parentData)
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index-1]).uid, "main", updata, self, true, function() self:ReopenGroup() end);
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", downdata, otherbutton, true, function() self:ReopenGroup() end);
             WeakAuras.FillOptions()
           end
         else
@@ -755,8 +754,8 @@ local methods = {
             --OptionsPrivate.SortDisplayButtons()
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index+1]).uid, "main", downdata, self, true, function() WeakAuras.UpdateGroupOrders(parentData) end);
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", updata, otherbutton, true, function() WeakAuras.UpdateGroupOrders(parentData) end);
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index+1]).uid, "main", downdata, self, true, function() self:ReopenGroup() end);
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end);
             WeakAuras.FillOptions()
           end
         else
@@ -937,12 +936,14 @@ local methods = {
       func = function() LibDD:CloseDropDownMenus() end
     });
     if(self.data.controlledChildren) then
+      self.node:SetSortComparator(function(a, b)
+        return (a.data.index or 0) < (b.data.index or 0)
+      end)
       self.expand:Show()
       self.callbacks.UpdateExpandButton()
       self:SetOnExpandCollapse(function()
         if not self.expand.expanded then
           for index, child in ipairs(self.data.controlledChildren) do
-            print("insert", child)
             self.node:Insert({id = child, index = index})
           end
           self.expand.expanded = true
@@ -1335,6 +1336,13 @@ local methods = {
     self:UpdateIconsVisible()
     self:UpdateOffset()
   end,
+  ["ReopenGroup"] = function(self)
+    local parentButton = OptionsPrivate.GetDisplayButton(self.data.parent)
+    if parentButton then
+      parentButton:Collapse()
+      parentButton:Expand()
+    end
+  end,
   ["GetGroup"] = function(self)
     return self.dgroup
   end,
@@ -1497,6 +1505,8 @@ local methods = {
     self.first = (order == 1)
     self.last = (order == max)
     self.dgrouporder = order;
+    local nodeData = self.node:GetData()
+    nodeData.index = order
     self:UpdateUpDownButtons()
   end,
   ["UpdateUpDownButtons"] = function(self)

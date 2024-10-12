@@ -687,58 +687,8 @@ function OptionsPrivate.CreateFrame()
 
   ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
 
-  --DevTool:AddData(ScrollBox, "ScrollBox")
-  function ScrollBox:InvokeInitializers()
-    local function SecureInvokeInitializer(frame, initializer)
-      self:InvokeInitializer(frame, initializer);
-    end
-    print("my InvokeInitializers")
-    --pcall(self.initializers, SecureInvokeInitializer);
-    self:InvokeInitializer(frame, self.initializers)
-    wipe(self.initializers);
-  end
-
-  local CallbackType = EnumUtil.MakeEnum("Closure", "Function");
-
-  -- temporary, try bypass error eating by secureexecuterange
-  function ScrollBox:TriggerEvent(event, ...)
-    if type(event) ~= "string" then
-      error("CallbackRegistryMixin:TriggerEvent 'event' requires string type.");
-    elseif not self.isUndefinedEventAllowed and not self.Event[event] then
-      error(string.format("CallbackRegistryMixin:TriggerEvent event '%s' doesn't exist.", event));
-    end
-
-    local closures = self:GetCallbacksByEvent(CallbackType.Closure, event);
-    if closures then
-      local function CallbackRegistryExecuteClosurePair(owner, closure, ...)
-        securecallfunction(closure, ...);
-      end
-
-      --pcall(closures, CallbackRegistryExecuteClosurePair, ...);
-      for k, v in pairs(closures) do
-        CallbackRegistryExecuteClosurePair(k, v, ...)
-      end
-    end
-
-    local funcs = self:GetCallbacksByEvent(CallbackType.Function, event);
-    if funcs then
-      local function CallbackRegistryExecuteOwnerPair(owner, func, ...)
-        securecallfunction(func, owner, ...);
-      end
-
-      --pcall(funcs, CallbackRegistryExecuteOwnerPair, ...);
-      for k, v in pairs(funcs) do
-        CallbackRegistryExecuteOwnerPair(k, v, ...)
-      end
-    end
-  end
-
   local function Initializer(frame, node)
-    --local data = node:GetData() -- get our data from the node with :GetData()
     frame:Init(node)
-    --button:SetScript("OnClick", function()
-    --    node:ToggleCollapsed()
-    --end)
   end
   local function Resetter(frame)
     frame:OnRelease()
