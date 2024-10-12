@@ -813,9 +813,10 @@ function WeakAuras.ShowOptions(msg)
 
   if (firstLoad) then
     frame = OptionsPrivate.CreateFrame();
+    local root = OptionsPrivate.TreeData:GetRootNode()
     for id, data in pairs(WeakAurasSaved.displays) do
       if not data.parent then
-        OptionsPrivate.TreeData:Insert({id = id})
+        root:Insert({id = id})
       end
     end
     --frame.buttonsScroll.frame:Show();
@@ -963,7 +964,8 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   print("WeakAuras.NewDisplayButton", id)
   OptionsPrivate.Private.ScanForLoads({[id] = true});
   if not data.parent then
-    OptionsPrivate.TreeData:Insert({id = id})
+    local root = OptionsPrivate.TreeData:GetRootNode()
+    root:Insert({id = id})
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
     local parentData = WeakAuras.GetData(data.parent)
@@ -1386,7 +1388,7 @@ function OptionsPrivate.SearchDisplayNode(id, parentNode)
     return id == node:GetData().id
   end
   parentNode = parentNode or OptionsPrivate.TreeData
-  local _, node = parentNode:FindByPredicate(predicate, true)
+  local _, node = parentNode:FindElementDataByPredicate(predicate, true)
   return node
 end
 
