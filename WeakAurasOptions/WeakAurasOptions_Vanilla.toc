@@ -75,7 +75,7 @@ AceGUI-Widgets\AceGUIWidget-WeakAurasExpand.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasExpandSmall.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasIcon.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasNewHeaderButton.lua
-AceGUI-Widgets\AceGUIWidget-WeakAurasLoadedHeaderButton.lua
+# AceGUI-Widgets\AceGUIWidget-WeakAurasLoadedHeaderButton.lua
 # AceGUI-Widgets\AceGUIWidget-WeakAurasDisplayButton.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasDropDownItemCurrency.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasPendingInstallButton.lua
@@ -103,4 +103,5 @@ AceGUI-Widgets\AceGuiWidget-WeakAurasMediaSound.lua
 AceGUI-Widgets\WeakAurasStatusbarAtlasWidget.lua
 
 Templates\WeakAurasDisplayButton.lua
+Templates\WeakAurasLoadedHeaderButton.lua
 Templates\WeakAurasDisplayButton.xml

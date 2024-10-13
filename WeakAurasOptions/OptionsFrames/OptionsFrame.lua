@@ -674,13 +674,6 @@ function OptionsPrivate.CreateFrame()
   ScrollBar:SetPoint("BOTTOMLEFT", buttonsContainer.content, "BOTTOMRIGHT", -8, 0)
 
   OptionsPrivate.TreeData = CreateTreeDataProvider()
-  OptionsPrivate.TreeData:SetSortComparator(function(a, b)
-    if a:GetDepth() == 1 then
-      return strcmputf8i(a.data.id, b.data.id) < 0
-    else
-      return (a.data.index or 0) < (b.data.index or 0)
-    end
-  end, true)
 
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
@@ -691,11 +684,25 @@ function OptionsPrivate.CreateFrame()
   local function Initializer(frame, node)
     frame:Init(node)
   end
-  local function Resetter(frame)
-    frame:OnRelease()
+
+  local function CustomFactory(factory, node)
+    local data = node:GetData()
+    if data.type == "WeakAurasButton" then
+      factory("WeakAurasDisplayButtonTemplate", Initializer)
+    elseif data.type == "loadedHeader" then
+      factory("WeakAurasLoadedHeaderButtonTemplate", Initializer)
+    end
   end
 
-  ScrollView:SetElementInitializer("WeakAurasDisplayButtonTemplate", Initializer)
+  local function Resetter(frame)
+    if frame.OnRelease then
+      frame:OnRelease()
+    end
+  end
+
+  --ScrollView:SetElementInitializer("WeakAurasDisplayButtonTemplate", Initializer)
+
+  ScrollView:SetElementFactory(CustomFactory)
   ScrollView:SetElementResetter(Resetter)
 
   --[[
@@ -800,136 +807,54 @@ function OptionsPrivate.CreateFrame()
   pendingUpdateButton:SetExpandDescription(L["Expand all pending Import"])
   pendingUpdateButton:SetCollapseDescription(L["Collapse all pending Import"])
   frame.pendingUpdateButton = pendingUpdateButton
+]]
+
+  local rootComparator = function(a, b)
+    return strcmputf8i(a.data.id, b.data.id) < 0
+  end
 
   -- Loaded section
-  local loadedButton = AceGUI:Create("WeakAurasLoadedHeaderButton")
-  loadedButton:SetText(L["Loaded/Standby"])
-  loadedButton:Disable()
-  loadedButton:EnableExpand()
-  if odb.loadedCollapse then
-    loadedButton:Collapse()
-  else
-    loadedButton:Expand()
-  end
-  loadedButton:SetOnExpandCollapse(function()
-    if loadedButton:GetExpanded() then
-      odb.loadedCollapse = nil
-    else
-      odb.loadedCollapse = true
-    end
-    OptionsPrivate.SortDisplayButtons()
-  end)
-  loadedButton:SetExpandDescription(L["Expand all loaded displays"])
-  loadedButton:SetCollapseDescription(L["Collapse all loaded displays"])
-  loadedButton:SetViewClick(function()
-    local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
-
-    if loadedButton.view.visibility == 2 then
-      for _, child in ipairs(loadedButton.childButtons) do
-        if child:IsLoaded() then
-          child:PriorityHide(2)
+  local loadedHeaderNode = OptionsPrivate.TreeData:Insert(
+    {
+      type = "loadedHeader",
+      name = "loaded",
+      text = L["Loaded/Standby"],
+      expandDescription = L["Expand all loaded displays"],
+      collapseDescription = L["Collapse all loaded displays"],
+      viewDescription = L["Toggle the visibility of all loaded displays"],
+      OnExpandCollapse = function(self)
+        if self:GetExpanded() then
+          odb.loadedCollapse = nil
+        else
+          odb.loadedCollapse = true
         end
       end
-      loadedButton:PriorityHide(2)
-    else
-      for _, child in ipairs(loadedButton.childButtons) do
-        if child:IsLoaded() then
-          child:PriorityShow(2)
+    }
+  )
+
+  loadedHeaderNode:SetSortComparator(rootComparator, true)
+  loadedHeaderNode:SetCollapsed(odb.loadedCollapse)
+
+  local unloadedHeaderNode = OptionsPrivate.TreeData:Insert(
+    {
+      type = "loadedHeader",
+      name = "unloaded",
+      text = L["Not Loaded"],
+      expandDescription = L["Expand all non-loaded displays"],
+      collapseDescription = L["Collapse all non-loaded displays"],
+      viewDescription = L["Toggle the visibility of all non-loaded displays"],
+      OnExpandCollapse = function(self)
+        if self:GetExpanded() then
+          odb.unloadedCollapse = nil
+        else
+          odb.unloadedCollapse = true
         end
       end
-      loadedButton:PriorityShow(2)
-    end
-    OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
-  end)
-  loadedButton.RecheckVisibility = function(self)
-    local none, all = true, true
-    for _, child in ipairs(loadedButton.childButtons) do
-      if child:GetVisibility() ~= 2 then
-        all = false
-      end
-      if child:GetVisibility() ~= 0 then
-        none = false
-      end
-    end
-    local newVisibility
-    if all then
-      newVisibility = 2
-    elseif none then
-      newVisibility = 0
-    else
-      newVisibility = 1
-    end
-    if newVisibility ~= self.view.visibility then
-      self.view.visibility = newVisibility
-      self:UpdateViewTexture()
-    end
-  end
-  loadedButton:SetViewDescription(L["Toggle the visibility of all loaded displays"])
-  loadedButton.childButtons = {}
-  frame.loadedButton = loadedButton
+    }
+  )
 
-  -- Not Loaded section
-  local unloadedButton = AceGUI:Create("WeakAurasLoadedHeaderButton")
-  unloadedButton:SetText(L["Not Loaded"])
-  unloadedButton:Disable()
-  unloadedButton:EnableExpand()
-  if odb.unloadedCollapse then
-    unloadedButton:Collapse()
-  else
-    unloadedButton:Expand()
-  end
-  unloadedButton:SetOnExpandCollapse(function()
-    if unloadedButton:GetExpanded() then
-      odb.unloadedCollapse = nil
-    else
-      odb.unloadedCollapse = true
-    end
-    OptionsPrivate.SortDisplayButtons()
-  end)
-  unloadedButton:SetExpandDescription(L["Expand all non-loaded displays"])
-  unloadedButton:SetCollapseDescription(L["Collapse all non-loaded displays"])
-  unloadedButton:SetViewClick(function()
-    local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
-    if unloadedButton.view.visibility == 2 then
-      for _, child in ipairs(unloadedButton.childButtons) do
-        child:PriorityHide(2)
-      end
-      unloadedButton:PriorityHide(2)
-    else
-      for _, child in ipairs(unloadedButton.childButtons) do
-        child:PriorityShow(2)
-      end
-      unloadedButton:PriorityShow(2)
-    end
-    OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
-  end)
-  unloadedButton.RecheckVisibility = function(self)
-    local none, all = true, true
-    for _, child in ipairs(unloadedButton.childButtons) do
-      if child:GetVisibility() ~= 2 then
-        all = false
-      end
-      if child:GetVisibility() ~= 0 then
-        none = false
-      end
-    end
-    local newVisibility
-    if all then
-      newVisibility = 2
-    elseif none then
-      newVisibility = 0
-    else
-      newVisibility = 1
-    end
-    if newVisibility ~= self.view.visibility then
-      self.view.visibility = newVisibility
-      self:UpdateViewTexture()
-    end
-  end
-  unloadedButton:SetViewDescription(L["Toggle the visibility of all non-loaded displays"])
-  unloadedButton.childButtons = {}
-  frame.unloadedButton = unloadedButton
-]]
+  unloadedHeaderNode:SetSortComparator(rootComparator, true)
+  unloadedHeaderNode:SetCollapsed(odb.unloadedHeaderNode)
 
   -- Sidebar used for Dynamic Text Replacements
   local sidegroup = AceGUI:Create("WeakAurasInlineGroup")
