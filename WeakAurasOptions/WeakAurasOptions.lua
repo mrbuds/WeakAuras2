@@ -1387,8 +1387,11 @@ function OptionsPrivate.SearchDisplayNode(id, parentNode)
   local predicate = function(node)
     return id == node:GetData().id
   end
-  parentNode = parentNode or OptionsPrivate.TreeData
-  local _, node = parentNode:FindElementDataByPredicate(predicate, true)
+  if parentNode then
+    DevTool:AddData(parentNode, "parentNode")
+  end
+  parentNode = parentNode and parentNode.dataProvider or OptionsPrivate.TreeData
+  local _, node = parentNode:FindByPredicate(predicate, true)
   return node
 end
 
