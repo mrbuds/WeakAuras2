@@ -536,7 +536,7 @@ local function OnRename(event, uid, oldid, newid)
   local oldNode = OptionsPrivate.GetDisplayNode(oldid)
   local parentNode = oldNode:GetParent()
 
-  parentNode:Insert({id = newid})
+  parentNode:Insert({type = "WeakAurasButton", id = newid, index = oldNode:GetData().index})
   OptionsPrivate.ClearOptions(oldid)
   collapsedOptions[newid] = collapsedOptions[oldid]
   collapsedOptions[oldid] = nil
@@ -813,10 +813,21 @@ function WeakAuras.ShowOptions(msg)
 
   if (firstLoad) then
     frame = OptionsPrivate.CreateFrame();
-    local root = OptionsPrivate.TreeData:GetRootNode()
+
+    local _, rootLoadedNode = OptionsPrivate.TreeData:FindByPredicate(function(node)
+      local data = node:GetData()
+      return data.type == "loadedHeader" and data.name == "loaded"
+    end, true)
+
+    local _, rootUnloadedNode = OptionsPrivate.TreeData:FindByPredicate(function(node)
+      local data = node:GetData()
+      return data.type == "loadedHeader" and data.name == "unloaded"
+    end, true)
+
     for id, data in pairs(WeakAurasSaved.displays) do
       if not data.parent then
-        root:Insert({id = id})
+        local root = OptionsPrivate.Private.loaded[id] and rootLoadedNode or rootUnloadedNode
+        root:Insert({type = "WeakAurasButton", id = id})
       end
     end
     --frame.buttonsScroll.frame:Show();
@@ -964,13 +975,13 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   print("WeakAuras.NewDisplayButton", id)
   OptionsPrivate.Private.ScanForLoads({[id] = true});
   if not data.parent then
-    local root = OptionsPrivate.TreeData:GetRootNode()
-    root:Insert({id = id})
+    local rootLoaded = OptionsPrivate.TreeData:FindByPredicate({type = "loadedHeader", name = "loaded"}, true)
+    rootLoaded:Insert({type = "WeakAurasButton", id = id})
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
     local parentData = WeakAuras.GetData(data.parent)
     local index = tIndexOf(parentData.controlledChildren, id)
-    parentNode:Insert({id = id, index = index})
+    parentNode:Insert({type = "WeakAurasButton", id = id, index = index})
   end
   -- EnsureDisplayButton(db.displays[id]);
   --WeakAuras.UpdateThumbnail(db.displays[id]);

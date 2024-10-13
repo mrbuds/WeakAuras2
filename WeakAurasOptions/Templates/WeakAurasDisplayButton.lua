@@ -934,7 +934,7 @@ local methods = {
       self:SetOnExpandCollapse(function()
         if not self.expand.expanded then
           for index, child in ipairs(self.data.controlledChildren) do
-            self.node:Insert({id = child, index = index})
+            self.node:Insert({type = "WeakAurasButton", id = child, index = index})
           end
           self.expand.expanded = true
         else
