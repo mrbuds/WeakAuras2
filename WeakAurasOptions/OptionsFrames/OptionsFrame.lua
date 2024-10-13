@@ -684,6 +684,7 @@ function OptionsPrivate.CreateFrame()
 
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
+  ScrollView:SetPadding(0, 0, 0, 0, 2)
 
   ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
 
