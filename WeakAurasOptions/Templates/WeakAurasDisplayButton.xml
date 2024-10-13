@@ -56,8 +56,9 @@
           <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT" x="6" y="0"/>
           <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT" x="-4" y="0"/>
         </Anchors>
-        <FontString>
+        <FontString inherits="GameFontNormalSmall">
           <FontHeight val="10"/>
+          <Color r="1" g="1" b="1" a="1"/>
         </FontString>
         <Scripts>
           <OnLoad>

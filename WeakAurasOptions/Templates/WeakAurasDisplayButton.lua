@@ -689,77 +689,67 @@ local methods = {
     end
 
     function self.callbacks.OnUpGroupClick()
-      if (WeakAuras.IsImporting()) then return end;
+      if (WeakAuras.IsImporting()) then return end
       if(self.data.parent) then
-        local id = self.data.id;
-        local parentData = WeakAuras.GetData(self.data.parent);
-        local index;
-        for childIndex, childId in pairs(parentData.controlledChildren) do
-          if(childId == id) then
-            index = childIndex;
-            break;
-          end
-        end
+        local id = self.data.id
+        local parentData = WeakAuras.GetData(self.data.parent)
+        local index = tIndexOf(parentData.controlledChildren, id)
         if(index) then
           if(index <= 1) then
-            error("Attempt to move up the first element in a group");
+            error("Attempt to move up the first element in a group")
           else
-            tremove(parentData.controlledChildren, index);
-            tinsert(parentData.controlledChildren, index - 1, id);
+            tremove(parentData.controlledChildren, index)
+            tinsert(parentData.controlledChildren, index - 1, id)
             WeakAuras.Add(parentData);
             OptionsPrivate.Private.AddParents(parentData)
             WeakAuras.ClearAndUpdateOptions(parentData.id)
-            self:SetGroupOrder(index - 1, #parentData.controlledChildren);
-            local otherbutton = OptionsPrivate.GetDisplayButton(parentData.controlledChildren[index]);
-            otherbutton:SetGroupOrder(index, #parentData.controlledChildren);
+            self:SetGroupOrder(index - 1, #parentData.controlledChildren)
+            local otherbuttonName = parentData.controlledChildren[index]
+            local otherbutton = OptionsPrivate.GetDisplayButton(otherbuttonName)
+            otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
             --OptionsPrivate.SortDisplayButtons();
-            local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
-            local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index-1]).uid, "main", updata, self, true, function() self:ReopenGroup() end);
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", downdata, otherbutton, true, function() self:ReopenGroup() end);
+            local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
+            local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
+            OptionsPrivate.Private.Animate("button", self.data.uid, "main", updata, self, true, function() self:ReopenGroup() end)
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", downdata, otherbutton, true, function() self:ReopenGroup() end)
             WeakAuras.FillOptions()
           end
         else
-          error("Display thinks it is a member of a group which does not control it");
+          error("Display thinks it is a member of a group which does not control it")
         end
       else
-        error("This display is not in a group. You should not have been able to click this button");
+        error("This display is not in a group. You should not have been able to click this button")
       end
     end
 
     function self.callbacks.OnDownGroupClick()
-      if (WeakAuras.IsImporting()) then return end;
+      if (WeakAuras.IsImporting()) then return end
       if(self.data.parent) then
-        local id = self.data.id;
-        local parentData = WeakAuras.GetData(self.data.parent);
-        local index;
-        for childIndex, childId in pairs(parentData.controlledChildren) do
-          if(childId == id) then
-            index = childIndex;
-            break;
-          end
-        end
+        local id = self.data.id
+        local parentData = WeakAuras.GetData(self.data.parent)
+        local index = tIndexOf(parentData.controlledChildren, id)
         if(index) then
           if(index >= #parentData.controlledChildren) then
-            error("Attempt to move down the last element in a group");
+            error("Attempt to move down the last element in a group")
           else
-            tremove(parentData.controlledChildren, index);
-            tinsert(parentData.controlledChildren, index + 1, id);
+            tremove(parentData.controlledChildren, index)
+            tinsert(parentData.controlledChildren, index + 1, id)
             WeakAuras.Add(parentData);
             OptionsPrivate.Private.AddParents(parentData)
             WeakAuras.ClearAndUpdateOptions(parentData.id)
-            self:SetGroupOrder(index + 1, #parentData.controlledChildren);
-            local otherbutton = OptionsPrivate.GetDisplayButton(parentData.controlledChildren[index]);
-            otherbutton:SetGroupOrder(index, #parentData.controlledChildren);
+            self:SetGroupOrder(index + 1, #parentData.controlledChildren)
+            local otherbuttonName = parentData.controlledChildren[index]
+            local otherbutton = OptionsPrivate.GetDisplayButton(otherbuttonName)
+            otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
             --OptionsPrivate.SortDisplayButtons()
-            local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32};
-            local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32};
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index+1]).uid, "main", downdata, self, true, function() self:ReopenGroup() end);
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(parentData.controlledChildren[index]).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end);
+            local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
+            local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
+            OptionsPrivate.Private.Animate("button", self.data.uid, "main", downdata, self, true, function() self:ReopenGroup() end)
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end)
             WeakAuras.FillOptions()
           end
         else
-          error("Display thinks it is a member of a group which does not control it");
+          error("Display thinks it is a member of a group which does not control it")
         end
       else
         error("This display is not in a group. You should not have been able to click this button");
@@ -770,12 +760,12 @@ local methods = {
       local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
       if(self.view.visibility == 2) then
         for child in OptionsPrivate.Private.TraverseAllChildren(self.data) do
-          OptionsPrivate.GetDisplayButton(child.id):PriorityHide(2);
+          OptionsPrivate.GetDisplayButton(child.id):PriorityHide(2)
         end
         self:PriorityHide(2)
       else
         for child in OptionsPrivate.Private.TraverseAllChildren(self.data) do
-          OptionsPrivate.GetDisplayButton(child.id):PriorityShow(2);
+          OptionsPrivate.GetDisplayButton(child.id):PriorityShow(2)
         end
         self:PriorityShow(2)
       end
@@ -784,32 +774,32 @@ local methods = {
     end
 
     function self.callbacks.OnRenameClick()
-      if (WeakAuras.IsImporting()) then return end;
+      if (WeakAuras.IsImporting()) then return end
       if(self.title:IsVisible()) then
-        self.title:Hide();
-        self.renamebox:SetText(self.title:GetText());
-        self.renamebox:Show();
+        self.title:Hide()
+        self.renamebox:SetText(self.title:GetText())
+        self.renamebox:Show()
       else
         self.title:Show();
-        self.renamebox:Hide();
+        self.renamebox:Hide()
       end
     end
 
     function self.callbacks.OnRenameAction(newid)
-      if (WeakAuras.IsImporting()) then return end;
-      local oldid = self.data.id;
+      if (WeakAuras.IsImporting()) then return end
+      local oldid = self.data.id
       if not(newid == oldid) then
-        WeakAuras.Rename(self.data, newid);
+        WeakAuras.Rename(self.data, newid)
       end
       self:UpdateParentWarning()
     end
 
     function self.callbacks.OnDragStart()
-      if WeakAuras.IsImporting() then return end;
+      if WeakAuras.IsImporting() then return end
       if not OptionsPrivate.IsDisplayPicked(self.data.id) then
         WeakAuras.PickDisplay(self.data.id)
       end
-      OptionsPrivate.StartDrag(self.data);
+      OptionsPrivate.StartDrag(self.data)
     end
 
     function self.callbacks.OnDragStop()
