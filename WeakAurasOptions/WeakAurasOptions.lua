@@ -536,7 +536,7 @@ local function OnRename(event, uid, oldid, newid)
   local oldNode = OptionsPrivate.GetDisplayNode(oldid)
   local parentNode = oldNode:GetParent()
 
-  parentNode:Insert({type = "WeakAurasButton", id = newid, index = oldNode:GetData().index})
+  parentNode:Insert({type = "WeakAurasButton", auraID = newid, index = oldNode:GetData().index})
   OptionsPrivate.ClearOptions(oldid)
   collapsedOptions[newid] = collapsedOptions[oldid]
   collapsedOptions[oldid] = nil
@@ -824,10 +824,26 @@ function WeakAuras.ShowOptions(msg)
       return data.type == "loadedHeader" and data.name == "unloaded"
     end, true)
 
+    local function groupComparator(a, b)
+      return a:GetData().index < b:GetData().index
+    end
+
+    local function addNode(auraID, parentNode, index)
+      local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID, index = index})
+      local data = WeakAuras.GetData(auraID)
+      if data.controlledChildren then
+        newNode:SetCollapsed(true)
+        newNode:SetSortComparator(groupComparator, false, true)
+        for childIndex, childID in ipairs(data.controlledChildren) do
+          addNode(childID, newNode, childIndex)
+        end
+      end
+    end
+
     for id, data in pairs(WeakAurasSaved.displays) do
       if not data.parent then
         local root = OptionsPrivate.Private.loaded[id] and rootLoadedNode or rootUnloadedNode
-        root:Insert({type = "WeakAurasButton", id = id})
+        addNode(id, root, nil)
       end
     end
     --frame.buttonsScroll.frame:Show();
@@ -976,12 +992,12 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   OptionsPrivate.Private.ScanForLoads({[id] = true});
   if not data.parent then
     local rootLoaded = OptionsPrivate.TreeData:FindByPredicate({type = "loadedHeader", name = "loaded"}, true)
-    rootLoaded:Insert({type = "WeakAurasButton", id = id})
+    rootLoaded:Insert({type = "WeakAurasButton", auraID = id})
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
     local parentData = WeakAuras.GetData(data.parent)
     local index = tIndexOf(parentData.controlledChildren, id)
-    parentNode:Insert({type = "WeakAurasButton", id = id, index = index})
+    parentNode:Insert({type = "WeakAurasButton", auraID = id, index = index})
   end
   -- EnsureDisplayButton(db.displays[id]);
   --WeakAuras.UpdateThumbnail(db.displays[id]);
@@ -1396,10 +1412,7 @@ end
 ---@return node?
 function OptionsPrivate.SearchDisplayNode(id, parentNode)
   local predicate = function(node)
-    return id == node:GetData().id
-  end
-  if parentNode then
-    DevTool:AddData(parentNode, "parentNode")
+    return id == node:GetData().auraID
   end
   parentNode = parentNode and parentNode.dataProvider or OptionsPrivate.TreeData
   local _, node = parentNode:FindByPredicate(predicate, true)
@@ -1445,7 +1458,7 @@ function OptionsPrivate.GetDisplayButton(id)
       return button
     else
       local predicate = function(elementData)
-        return elementData:GetData().id == id
+        return elementData:GetData().auraID == id
       end
       OptionsPrivate.ScrollBox:ScrollToElementDataByPredicate(predicate, ScrollBoxConstants.AlignCenter)
       return OptionsPrivate.ScrollBox:FindFrame(node)

@@ -4,16 +4,6 @@
 
   <Button name="WeakAurasDisplayButtonTemplate" mixin="WeakAurasDisplayButtonMixin" inherits="OptionsListButtonTemplate" virtual="true">
     <Size x="600" y="32"/>
-    <Frames>
-      <Frame parentKey="offset">
-        <Size x="1"/>
-        <Anchors>
-          <Anchor point="TOP" relativeKey="$parent" relativePoint="TOP"/>
-          <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="BOTTOM"/>
-          <Anchor point="LEFT" relativeKey="$parent" relativePoint="LEFT"/>
-        </Anchors>
-      </Frame>
-    </Frames>
     <Layers>
       <Layer level="BACKGROUND">
         <Texture parentKey="background" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="BLEND">
@@ -25,7 +15,7 @@
           <Size x="32" y="32"/>
           <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
           <Anchors>
-            <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="RIGHT"/>
+            <Anchor point="LEFT" relativeKey="$parent" relativePoint="LEFT"/>
           </Anchors>
         </Texture>
         <FontString parentKey="title" inherits="GameFontNormal" justifyH="LEFT">
@@ -96,7 +86,7 @@
       <Button parentKey="ungroup" hidden="true">
         <Size x="11" y="11"/>
         <Anchors>
-          <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="RIGHT"/>
+          <Anchor point="LEFT" relativeKey="$parent" relativePoint="LEFT"/>
         </Anchors>
         <NormalTexture file="Interface/MoneyFrame/Arrow-Left-Down.blp">
           <TexCoords>
@@ -108,7 +98,7 @@
       <Button parentKey="upgroup" hidden="true">
         <Size x="11" y="11"/>
         <Anchors>
-          <Anchor point="TOPLEFT" relativeKey="$parent.offset" relativePoint="TOPRIGHT"/>
+          <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPLEFT"/>
         </Anchors>
         <NormalTexture file="Interface/MoneyFrame/Arrow-Left-Down.blp">
           <TexCoords>
@@ -120,7 +110,7 @@
       <Button parentKey="downgroup" hidden="true">
         <Size x="11" y="11"/>
         <Anchors>
-          <Anchor point="BOTTOMLEFT" relativeKey="$parent.offset" relativePoint="BOTTOMRIGHT"/>
+          <Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMLEFT"/>
         </Anchors>
         <NormalTexture file="Interface/MoneyFrame/Arrow-Left-Down.blp">
           <TexCoords>
@@ -149,53 +139,55 @@
     </Frames>
   </Button>
 
-    <Button name="WeakAurasLoadedHeaderButtonTemplate" mixin="WeakAurasLoadedHeaderButtonMixin" inherits="OptionsListButtonTemplate" virtual="true">
-      <Size x="600" y="20"/>
-      <DisabledFont style="GameFontNormal"/>
-      <Frames>
-        <Button parentKey="expand">
-          <Size x="16" y="16"/>
+  <Button name="WeakAurasLoadedHeaderButtonTemplate" mixin="WeakAurasLoadedHeaderButtonMixin" inherits="OptionsListButtonTemplate" virtual="true">
+    <Size x="600" y="20"/>
+    <DisabledFont style="GameFontNormal"/>
+    <Frames>
+      <Button parentKey="expand">
+        <Size x="16" y="16"/>
+        <Anchors>
+          <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT"/>
+        </Anchors>
+        <NormalTexture file="Interface/BUTTONS/UI-PlusButton-Disabled.blp"/>
+        <PushedTexture file="Interface/BUTTONS/UI-MinusButton-Down.blp"/>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
+      </Button>
+      <Button parentKey="view">
+        <Size x="16" y="16"/>
+        <Anchors>
+          <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT" x="-16" y="0"/>
+        </Anchors>
+        <NormalTexture file="Interface/LFGFrame/BattlenetWorking4.blp">
+          <TexCoords left="0.1" right="0.9" bottom="0.1" top="0.9"/>
+        </NormalTexture>
+        <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
+      </Button>
+    </Frames>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture parentKey="background" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="BLEND">
+          <Color r="0.5" g="0.5" b="0.5" a="0.6"/>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY">
+        <!--
+        <Texture parentKey="icon" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="ADD">
+          <Size x="32" y="32"/>
+          <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
           <Anchors>
+            <Anchor point="LEFT" relativeKey="$parent" relativePoint="LEFT"/>
+          </Anchors>
+        </Texture>
+        -->
+        <FontString parentKey="title" inherits="GameFontNormal" justifyH="LEFT">
+          <Size y="14"/>
+          <Anchors>
+            <Anchor point="TOP" relativeKey="$parent" relativePoint="TOP" x="0" y="-2"/>
+            <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT" x="2" y="0"/>
             <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT"/>
           </Anchors>
-          <NormalTexture file="Interface/BUTTONS/UI-PlusButton-Disabled.blp"/>
-          <PushedTexture file="Interface/BUTTONS/UI-MinusButton-Down.blp"/>
-          <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
-        </Button>
-        <Button parentKey="view">
-          <Size x="16" y="16"/>
-          <Anchors>
-            <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT" x="-16" y="0"/>
-          </Anchors>
-          <NormalTexture file="Interface/LFGFrame/BattlenetWorking4.blp">
-            <TexCoords left="0.1" right="0.9" bottom="0.1" top="0.9"/>
-          </NormalTexture>
-          <HighlightTexture file="Interface/BUTTONS/UI-Panel-MinimizeButton-Highlight.blp" alphaMode="ADD"/>
-        </Button>
-      </Frames>
-      <Layers>
-        <Layer level="BACKGROUND">
-          <Texture parentKey="background" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="BLEND">
-            <Color r="0.5" g="0.5" b="0.5" a="0.6"/>
-          </Texture>
-        </Layer>
-        <Layer level="OVERLAY">
-          <Texture parentKey="icon" file="Interface/BUTTONS/UI-Listbox-Highlight2.blp" alphaMode="ADD">
-            <Size x="32" y="32"/>
-            <Color r="0.5" g="0.5" b="0.5" a="0.25"/>
-            <Anchors>
-              <Anchor point="LEFT" relativeKey="$parent.offset" relativePoint="RIGHT"/>
-            </Anchors>
-          </Texture>
-          <FontString parentKey="title" inherits="GameFontNormal" justifyH="LEFT">
-            <Size y="14"/>
-            <Anchors>
-              <Anchor point="TOP" relativeKey="$parent" relativePoint="TOP" x="0" y="-2"/>
-              <Anchor point="LEFT" relativeKey="$parent.icon" relativePoint="RIGHT" x="2" y="0"/>
-              <Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT"/>
-            </Anchors>
-          </FontString>
-        </Layer>
-      </Layers>
-    </Button>
+        </FontString>
+      </Layer>
+    </Layers>
+  </Button>
 </Ui>
