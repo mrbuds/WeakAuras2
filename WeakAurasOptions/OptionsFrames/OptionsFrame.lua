@@ -677,7 +677,7 @@ function OptionsPrivate.CreateFrame()
 
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
-  ScrollView:SetPadding(0, 0, 0, 0, 2)
+  ScrollView:SetPadding(0, 2, 0, 0, 2)
 
   ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
 
@@ -810,7 +810,7 @@ function OptionsPrivate.CreateFrame()
 ]]
 
   local rootComparator = function(a, b)
-    return strcmputf8i(a.data.id, b.data.id) < 0
+    return strcmputf8i(a.data.auraID, b.data.auraID) < 0
   end
 
   -- Loaded section
@@ -824,15 +824,15 @@ function OptionsPrivate.CreateFrame()
       viewDescription = L["Toggle the visibility of all loaded displays"],
       OnExpandCollapse = function(self)
         if self:GetExpanded() then
-          odb.loadedCollapse = nil
-        else
           odb.loadedCollapse = true
+        else
+          odb.loadedCollapse = false
         end
       end
     }
   )
 
-  loadedHeaderNode:SetSortComparator(rootComparator, true)
+  loadedHeaderNode:SetSortComparator(rootComparator, false)
   loadedHeaderNode:SetCollapsed(odb.loadedCollapse)
 
   local unloadedHeaderNode = OptionsPrivate.TreeData:Insert(
@@ -845,16 +845,16 @@ function OptionsPrivate.CreateFrame()
       viewDescription = L["Toggle the visibility of all non-loaded displays"],
       OnExpandCollapse = function(self)
         if self:GetExpanded() then
-          odb.unloadedCollapse = nil
-        else
           odb.unloadedCollapse = true
+        else
+          odb.unloadedCollapse = false
         end
       end
     }
   )
 
   unloadedHeaderNode:SetSortComparator(rootComparator, true)
-  unloadedHeaderNode:SetCollapsed(odb.unloadedHeaderNode)
+  unloadedHeaderNode:SetCollapsed(odb.unloadedCollapse)
 
   -- Sidebar used for Dynamic Text Replacements
   local sidegroup = AceGUI:Create("WeakAurasInlineGroup")

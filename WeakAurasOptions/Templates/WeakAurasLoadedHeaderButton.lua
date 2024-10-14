@@ -38,7 +38,6 @@ local methods = {
   end,
   ["Expand"] = function(self, reloadTooltip)
     self.expand:Enable()
-    self.expanded = true
     self.expand:SetNormalTexture("Interface\\BUTTONS\\UI-MinusButton-Up.blp")
     self.expand:SetPushedTexture("Interface\\BUTTONS\\UI-MinusButton-Down.blp")
     self.expand.title = L["Collapse"]
@@ -53,7 +52,6 @@ local methods = {
   end,
   ["Collapse"] = function(self, reloadTooltip)
     self.expand:Enable()
-    self.expanded = false
     self.expand:SetNormalTexture("Interface\\BUTTONS\\UI-PlusButton-Up.blp")
     self.expand:SetPushedTexture("Interface\\BUTTONS\\UI-PlusButton-Down.blp")
     self.expand.title = L["Expand"]
@@ -66,16 +64,12 @@ local methods = {
     end
     self.node:SetCollapsed(true)
   end,
-  ["SetOnExpandCollapse"] = function(self, func)
-    self.expand.func = func
-  end,
   ["GetExpanded"] = function(self)
     return not self.node:IsCollapsed()
   end,
   ["DisableExpand"] = function(self)
     self.expand:Disable()
     self.expand.disabled = true
-    self.expand.expanded = false
     self.expand:SetNormalTexture("Interface\\BUTTONS\\UI-PlusButton-Disabled.blp")
   end,
   ["EnableExpand"] = function(self)
@@ -178,9 +172,8 @@ function WeakAurasLoadedHeaderButtonMixin:Init(node)
   self.node = node
   local nodeData = node:GetData()
   self:SetText(" " .. nodeData.text)
-  self.expand.expanded = true
   self.expand.disabled = true
-  self.expand.func = function() end
+  self.expand.func = nodeData.OnExpandCollapse
   self.expand:Disable()
   self.expand.title = L["Disabled"]
   self.expand.desc = L["Expansion is disabled because this group has no children"]
@@ -199,7 +192,6 @@ function WeakAurasLoadedHeaderButtonMixin:Init(node)
 
   self:Disable()
   self:EnableExpand()
-  self:SetOnExpandCollapse(nodeData.OnExpandCollapse)
 
   self.childButtons = {} -- dummy for now
 end

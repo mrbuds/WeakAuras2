@@ -563,13 +563,14 @@ local methods = {
         end
         WeakAuras.Add(selectedData);
         OptionsPrivate.ClearOptions(selectedId)
-
+        --[[
         if (selectedData.controlledChildren) then
           for child in OptionsPrivate.Private.TraverseAllChildren(selectedData) do
             local childButton = OptionsPrivate.GetDisplayButton(child.id)
             childButton:UpdateOffset()
           end
         end
+        ]]
       end
 
       WeakAuras.Add(self.data);
@@ -704,14 +705,24 @@ local methods = {
             OptionsPrivate.Private.AddParents(parentData)
             WeakAuras.ClearAndUpdateOptions(parentData.id)
             self:SetGroupOrder(index - 1, #parentData.controlledChildren)
+
             local otherbuttonName = parentData.controlledChildren[index]
             local otherbutton = OptionsPrivate.GetDisplayButton(otherbuttonName)
             otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
             --OptionsPrivate.SortDisplayButtons();
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
-            OptionsPrivate.Private.Animate("button", self.data.uid, "main", updata, self, true, function() self:ReopenGroup() end)
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", downdata, otherbutton, true, function() self:ReopenGroup() end)
+            --[[
+            OptionsPrivate.Private.Animate("button", self.data.uid, "main", updata, self, true, function()
+              self.node.data.index = self.node.data.index + 1
+            end)
+            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", downdata, otherbutton, true, function()
+              otherbutton.node.data.index = otherbutton.node.data.index - 1
+            end)
+            ]]
+            self.node.data.index = tIndexOf(parentData.controlledChildren, self.id)
+            otherbutton.node.data.index = tIndexOf(parentData.controlledChildren, otherbutton.id)
+            self.node:GetParent():Sort()
             WeakAuras.FillOptions()
           end
         else
@@ -744,8 +755,11 @@ local methods = {
             --OptionsPrivate.SortDisplayButtons()
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
-            OptionsPrivate.Private.Animate("button", self.data.uid, "main", downdata, self, true, function() self:ReopenGroup() end)
-            OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end)
+            --OptionsPrivate.Private.Animate("button", self.data.uid, "main", downdata, self, true, function() self:ReopenGroup() end)
+            --OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end)
+            self.node.data.index = tIndexOf(parentData.controlledChildren, self.id)
+            otherbutton.node.data.index = tIndexOf(parentData.controlledChildren, otherbutton.id)
+            self.node:GetParent():Sort()
             WeakAuras.FillOptions()
           end
         else
@@ -926,22 +940,8 @@ local methods = {
       func = function() LibDD:CloseDropDownMenus() end
     });
     if(self.data.controlledChildren) then
-      self.node:SetSortComparator(function(a, b)
-        return (a.data.index or 0) < (b.data.index or 0)
-      end)
       self.expand:Show()
       self.callbacks.UpdateExpandButton()
-      self:SetOnExpandCollapse(function()
-        if not self.expand.expanded then
-          for index, child in ipairs(self.data.controlledChildren) do
-            self.node:Insert({type = "WeakAurasButton", id = child, index = index})
-          end
-          self.expand.expanded = true
-        else
-          self.node:Flush()
-          self.expand.expanded = false
-        end
-      end)
     else
       self.expand:Hide()
     end
@@ -1124,10 +1124,12 @@ local methods = {
     end
     parentButton:UpdateParentWarning()
 
+    --[[
     for child in OptionsPrivate.Private.TraverseAllChildren(self.data) do
       local button = OptionsPrivate.GetDisplayButton(child.id)
       button:UpdateOffset()
     end
+    ]]
 
     OptionsPrivate.SortDisplayButtons()
   end,
@@ -1270,22 +1272,6 @@ local methods = {
   end,
   ["ShowTooltip"] = function(self)
   end,
-  ["UpdateOffset"] = function(self)
-    local group = self.dgroup
-    if group then
-      local depth = 0
-      while(group) do
-        depth = depth + 1
-        group = WeakAuras.GetData(group).parent
-      end
-      self.offset:SetWidth(depth * 8 + 1)
-    else
-      self.offset:SetWidth(1)
-    end
-  end,
-  ["GetOffset"] = function(self)
-    return self.offset:GetWidth()
-  end,
   ["GetGroupOrCopying"] = function(self)
     return self.group;
   end,
@@ -1314,17 +1300,14 @@ local methods = {
     self.dgroup = group
     if(group) then
       self.icon:SetPoint("LEFT", self.ungroup, "RIGHT")
-      self.background:ClearAllPoints()
-      self.background:SetPoint("LEFT", self.offset, "RIGHT")
-      self.background:SetPoint("TOPRIGHT", self, "TOPRIGHT")
-      self.background:SetPoint("BOTTOM", self, "BOTTOM")
+      --self.background:ClearAllPoints()
+      --self.background:SetAllPoints(self)
     else
       self.icon:SetPoint("LEFT", self, "LEFT")
-      self.background:ClearAllPoints()
-      self.background:SetAllPoints(self)
+      --self.background:ClearAllPoints()
+      --self.background:SetAllPoints(self)
     end
     self:UpdateIconsVisible()
-    self:UpdateOffset()
   end,
   ["ReopenGroup"] = function(self)
     local parentButton = OptionsPrivate.GetDisplayButton(self.data.parent)
@@ -1348,37 +1331,35 @@ local methods = {
   end,
   ["Expand"] = function(self, reloadTooltip)
     self.expand:Enable()
-    OptionsPrivate.SetCollapsed(self.data.id, "displayButton", "", false)
+    --OptionsPrivate.SetCollapsed(self.data.id, "displayButton", "", false)
     self.expand:SetNormalTexture("Interface/BUTTONS/UI-MinusButton-Up.blp")
     self.expand:SetPushedTexture("Interface/BUTTONS/UI-MinusButton-Down.blp")
     self.expand.title = L["Collapse"]
     self.expand.desc = L["Hide this group's children"]
     self.expand:SetScript("OnClick", function() self:Collapse(true) end)
-    self.expand.func()
     if(reloadTooltip) then
       Hide_Tooltip()
       Show_Tooltip(self, self.expand.title, self.expand.desc)
     end
+    self.node:SetCollapsed(false)
   end,
   ["Collapse"] = function(self, reloadTooltip)
     self.expand:Enable()
-    OptionsPrivate.SetCollapsed(self.data.id, "displayButton", "", true)
+    --OptionsPrivate.SetCollapsed(self.data.id, "displayButton", "", true)
     self.expand:SetNormalTexture("Interface/BUTTONS/UI-PlusButton-Up.blp")
     self.expand:SetPushedTexture("Interface/BUTTONS/UI-PlusButton-Down.blp")
     self.expand.title = L["Expand"]
     self.expand.desc = L["Show this group's children"]
     self.expand:SetScript("OnClick", function() self:Expand(true) end)
-    self.expand.func()
     if(reloadTooltip) then
       Hide_Tooltip()
       Show_Tooltip(self, self.expand.title, self.expand.desc)
     end
-  end,
-  ["SetOnExpandCollapse"] = function(self, func)
-    self.expand.func = func
+    self.node:SetCollapsed(true)
   end,
   ["GetExpanded"] = function(self)
-    return not OptionsPrivate.IsCollapsed(self.data.id, "displayButton", "", true)
+    --return not OptionsPrivate.IsCollapsed(self.data.id, "displayButton", "", true)
+    return not self.node:IsCollapsed()
   end,
   ["DisableExpand"] = function(self)
     if self.expand.disabled then
@@ -1386,7 +1367,6 @@ local methods = {
     end
     self.expand:Disable()
     self.expand.disabled = true
-    self.expand.expanded = false
     self.expand:SetNormalTexture("Interface\\BUTTONS\\UI-PlusButton-Disabled.blp")
   end,
   ["EnableExpand"] = function(self)
@@ -1540,14 +1520,14 @@ local methods = {
     self.node.data.picked = true
     self:LockHighlight()
     self:PriorityShow(1)
-    self:RecheckParentVisibility()
+    --self:RecheckParentVisibility()
   end,
   ["ClearPick"] = function(self, noHide)
     self.node.data.picked = nil
     self:UnlockHighlight()
     if not noHide then
       self:PriorityHide(1);
-      self:RecheckParentVisibility()
+      --self:RecheckParentVisibility()
     end
   end,
   ["SyncVisibility"] = function(self)
@@ -1601,6 +1581,7 @@ local methods = {
     end
   end,
   ["RecheckParentVisibility"] = function(self)
+    if true then return end -- TODO: script ran too long error
     if self.data.parent then
       local parentButton = OptionsPrivate.GetDisplayButton(self.data.parent)
       parentButton:RecheckVisibility()
@@ -1804,9 +1785,7 @@ function WeakAurasDisplayButtonMixin:Init(node)
   end)
   self.downgroup:SetScript("OnLeave", Hide_Tooltip)
 
-  self.expand.expanded = false
   self.expand.disabled = true
-  self.expand.func = function() end
   self.expand.title = L["Disabled"]
   self.expand.desc = L["Expansion is disabled because this group has no children"]
   self.expand:SetScript("OnEnter", function() Show_Tooltip(self, self.expand.title, self.expand.desc) end)
@@ -1819,7 +1798,7 @@ function WeakAurasDisplayButtonMixin:Init(node)
   end
 
   local nodeData = node:GetData()
-  self:SetData(WeakAuras.GetData(nodeData.id))
+  self:SetData(WeakAuras.GetData(nodeData.auraID))
   self:Initialize()
   self:UpdateWarning()
   self:AcquireThumbnail()
