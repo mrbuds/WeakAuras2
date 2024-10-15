@@ -804,6 +804,64 @@ function OptionsPrivate.DeleteAuras(auras, parents)
   OptionsPrivate.Private.Threads:Add("Deleting Auras", co1)
 end
 
+function OptionsPrivate.RefreshNodes(rootNode, filter)
+  local _, rootLoadedNode = rootNode:FindByPredicate(function(node)
+    local data = node:GetData()
+    return data.type == "loadedHeader" and data.name == "loaded"
+  end, true)
+
+  local _, rootUnloadedNode = rootNode:FindByPredicate(function(node)
+    local data = node:GetData()
+    return data.type == "loadedHeader" and data.name == "unloaded"
+  end, true)
+
+  local function groupComparator(a, b)
+    return a:GetData().index < b:GetData().index
+  end
+
+  local aurasMatchingFilter = {}
+  local shouldFilter = filter and filter ~= ""
+  if shouldFilter then
+    local filterTable = OptionsPrivate.Private.splitAtOr(filter)
+
+    for auraID, auraData in pairs(WeakAurasSaved.displays) do
+      for _, word in ipairs(filterTable) do
+        if(auraID:lower():find(word, 1, true)) then
+          aurasMatchingFilter[auraID] = true
+          for parent in OptionsPrivate.Private.TraverseParents(auraData) do
+            aurasMatchingFilter[parent.id] = true
+          end
+        end
+      end
+    end
+  end
+
+  local function addNode(auraID, parentNode, index)
+    if shouldFilter and not aurasMatchingFilter[auraID] then
+      return
+    end
+    local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID, index = index})
+    local data = WeakAuras.GetData(auraID)
+    if data.controlledChildren then
+      newNode:SetCollapsed(true)
+      newNode:SetSortComparator(groupComparator, false, true)
+      for childIndex, childID in ipairs(data.controlledChildren) do
+        addNode(childID, newNode, childIndex)
+      end
+    end
+  end
+
+  rootLoadedNode:Flush()
+  rootUnloadedNode:Flush()
+
+  for id, data in pairs(WeakAurasSaved.displays) do
+    if not data.parent then
+      local root = OptionsPrivate.Private.loaded[id] and rootLoadedNode or rootUnloadedNode
+      addNode(id, root, nil)
+    end
+  end
+end
+
 function WeakAuras.ShowOptions(msg)
   local firstLoad = not(frame);
   OptionsPrivate.Private.Pause();
@@ -814,38 +872,7 @@ function WeakAuras.ShowOptions(msg)
   if (firstLoad) then
     frame = OptionsPrivate.CreateFrame();
 
-    local _, rootLoadedNode = OptionsPrivate.TreeData:FindByPredicate(function(node)
-      local data = node:GetData()
-      return data.type == "loadedHeader" and data.name == "loaded"
-    end, true)
-
-    local _, rootUnloadedNode = OptionsPrivate.TreeData:FindByPredicate(function(node)
-      local data = node:GetData()
-      return data.type == "loadedHeader" and data.name == "unloaded"
-    end, true)
-
-    local function groupComparator(a, b)
-      return a:GetData().index < b:GetData().index
-    end
-
-    local function addNode(auraID, parentNode, index)
-      local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID, index = index})
-      local data = WeakAuras.GetData(auraID)
-      if data.controlledChildren then
-        newNode:SetCollapsed(true)
-        newNode:SetSortComparator(groupComparator, false, true)
-        for childIndex, childID in ipairs(data.controlledChildren) do
-          addNode(childID, newNode, childIndex)
-        end
-      end
-    end
-
-    for id, data in pairs(WeakAurasSaved.displays) do
-      if not data.parent then
-        local root = OptionsPrivate.Private.loaded[id] and rootLoadedNode or rootUnloadedNode
-        addNode(id, root, nil)
-      end
-    end
+    OptionsPrivate.RefreshNodes(OptionsPrivate.TreeData)
     --frame.buttonsScroll.frame:Show();
 
     -- LayoutDisplayButtons(msg);

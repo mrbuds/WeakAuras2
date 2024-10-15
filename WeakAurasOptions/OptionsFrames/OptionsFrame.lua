@@ -564,7 +564,14 @@ function OptionsPrivate.CreateFrame()
   local filterInput = CreateFrame("EditBox", "WeakAurasFilterInput", frame, "SearchBoxTemplate")
   filterInput:SetScript("OnTextChanged", function(self)
     SearchBoxTemplate_OnTextChanged(self)
-    OptionsPrivate.SortDisplayButtons(filterInput:GetText())
+    local filter = filterInput:GetText()
+    local useTextFilter = filter ~= ""
+    if not useTextFilter then
+      OptionsPrivate.ScrollView:SetDataProvider(OptionsPrivate.TreeData)
+    else
+      OptionsPrivate.RefreshNodes(OptionsPrivate.TreeDataFiltered, filter)
+      OptionsPrivate.ScrollView:SetDataProvider(OptionsPrivate.TreeDataFiltered)
+    end
   end)
   filterInput:SetHeight(15)
   filterInput:SetPoint("TOP", frame, "TOP", 0, -65)
@@ -674,10 +681,12 @@ function OptionsPrivate.CreateFrame()
   ScrollBar:SetPoint("BOTTOMLEFT", buttonsContainer.content, "BOTTOMRIGHT", -8, 0)
 
   OptionsPrivate.TreeData = CreateTreeDataProvider()
+  OptionsPrivate.TreeDataFiltered = CreateTreeDataProvider()
 
   local ScrollView = CreateScrollBoxListTreeListView()
   ScrollView:SetDataProvider(OptionsPrivate.TreeData)
   ScrollView:SetPadding(0, 2, 0, 0, 2)
+  OptionsPrivate.ScrollView = ScrollView
 
   ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
 
@@ -813,48 +822,52 @@ function OptionsPrivate.CreateFrame()
     return strcmputf8i(a.data.auraID, b.data.auraID) < 0
   end
 
-  -- Loaded section
-  local loadedHeaderNode = OptionsPrivate.TreeData:Insert(
-    {
-      type = "loadedHeader",
-      name = "loaded",
-      text = L["Loaded/Standby"],
-      expandDescription = L["Expand all loaded displays"],
-      collapseDescription = L["Collapse all loaded displays"],
-      viewDescription = L["Toggle the visibility of all loaded displays"],
-      OnExpandCollapse = function(self)
-        if self:GetExpanded() then
-          odb.loadedCollapse = false
-        else
-          odb.loadedCollapse = true
+  local function addHeaders(parentNode)
+    -- Loaded section
+    local loadedHeaderNode = parentNode:Insert(
+      {
+        type = "loadedHeader",
+        name = "loaded",
+        text = L["Loaded/Standby"],
+        expandDescription = L["Expand all loaded displays"],
+        collapseDescription = L["Collapse all loaded displays"],
+        viewDescription = L["Toggle the visibility of all loaded displays"],
+        OnExpandCollapse = function(self)
+          if self:GetExpanded() then
+            odb.loadedCollapse = false
+          else
+            odb.loadedCollapse = true
+          end
         end
-      end
-    }
-  )
+      }
+    )
+    loadedHeaderNode:SetSortComparator(rootComparator, false)
+    loadedHeaderNode:SetCollapsed(odb.loadedCollapse)
 
-  loadedHeaderNode:SetSortComparator(rootComparator, false)
-  loadedHeaderNode:SetCollapsed(odb.loadedCollapse)
-
-  local unloadedHeaderNode = OptionsPrivate.TreeData:Insert(
-    {
-      type = "loadedHeader",
-      name = "unloaded",
-      text = L["Not Loaded"],
-      expandDescription = L["Expand all non-loaded displays"],
-      collapseDescription = L["Collapse all non-loaded displays"],
-      viewDescription = L["Toggle the visibility of all non-loaded displays"],
-      OnExpandCollapse = function(self)
-        if self:GetExpanded() then
-          odb.unloadedCollapse = false
-        else
-          odb.unloadedCollapse = true
+    -- Unloaded section
+    local unloadedHeaderNode = parentNode:Insert(
+      {
+        type = "loadedHeader",
+        name = "unloaded",
+        text = L["Not Loaded"],
+        expandDescription = L["Expand all non-loaded displays"],
+        collapseDescription = L["Collapse all non-loaded displays"],
+        viewDescription = L["Toggle the visibility of all non-loaded displays"],
+        OnExpandCollapse = function(self)
+          if self:GetExpanded() then
+            odb.unloadedCollapse = false
+          else
+            odb.unloadedCollapse = true
+          end
         end
-      end
-    }
-  )
+      }
+    )
+    unloadedHeaderNode:SetSortComparator(rootComparator, false)
+    unloadedHeaderNode:SetCollapsed(odb.unloadedCollapse)
+  end
 
-  unloadedHeaderNode:SetSortComparator(rootComparator, false)
-  unloadedHeaderNode:SetCollapsed(odb.unloadedCollapse)
+  addHeaders(OptionsPrivate.TreeDataFiltered)
+  addHeaders(OptionsPrivate.TreeData)
 
   -- Sidebar used for Dynamic Text Replacements
   local sidegroup = AceGUI:Create("WeakAurasInlineGroup")
