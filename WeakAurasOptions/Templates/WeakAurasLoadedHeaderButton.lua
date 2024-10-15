@@ -43,12 +43,12 @@ local methods = {
     self.expand.title = L["Collapse"]
     self.expand.desc = self.expand.collapsedesc
     self.expand:SetScript("OnClick", function() self:Collapse(true) end)
-    self.expand.func(self)
     if(reloadTooltip) then
       Hide_Tooltip()
       Show_Tooltip(self, self.expand.title, self.expand.desc)
     end
     self.node:SetCollapsed(false)
+    self.expand.func(self)
   end,
   ["Collapse"] = function(self, reloadTooltip)
     self.expand:Enable()
@@ -57,12 +57,12 @@ local methods = {
     self.expand.title = L["Expand"]
     self.expand.desc = self.expand.expanddesc
     self.expand:SetScript("OnClick", function() self:Expand(true) end)
-    self.expand.func(self)
     if(reloadTooltip) then
       Hide_Tooltip()
       Show_Tooltip(self, self.expand.title, self.expand.desc)
     end
     self.node:SetCollapsed(true)
+    self.expand.func(self)
   end,
   ["GetExpanded"] = function(self)
     return not self.node:IsCollapsed()
