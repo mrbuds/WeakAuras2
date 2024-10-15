@@ -824,9 +824,9 @@ function OptionsPrivate.CreateFrame()
       viewDescription = L["Toggle the visibility of all loaded displays"],
       OnExpandCollapse = function(self)
         if self:GetExpanded() then
-          odb.loadedCollapse = true
-        else
           odb.loadedCollapse = false
+        else
+          odb.loadedCollapse = true
         end
       end
     }
@@ -845,15 +845,15 @@ function OptionsPrivate.CreateFrame()
       viewDescription = L["Toggle the visibility of all non-loaded displays"],
       OnExpandCollapse = function(self)
         if self:GetExpanded() then
-          odb.unloadedCollapse = true
-        else
           odb.unloadedCollapse = false
+        else
+          odb.unloadedCollapse = true
         end
       end
     }
   )
 
-  unloadedHeaderNode:SetSortComparator(rootComparator, true)
+  unloadedHeaderNode:SetSortComparator(rootComparator, false)
   unloadedHeaderNode:SetCollapsed(odb.unloadedCollapse)
 
   -- Sidebar used for Dynamic Text Replacements
