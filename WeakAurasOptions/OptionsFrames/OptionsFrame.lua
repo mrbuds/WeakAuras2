@@ -683,9 +683,19 @@ function OptionsPrivate.CreateFrame()
   OptionsPrivate.TreeData = CreateTreeDataProvider()
   OptionsPrivate.TreeDataFiltered = CreateTreeDataProvider()
 
-  local ScrollView = CreateScrollBoxListTreeListView()
-  ScrollView:SetDataProvider(OptionsPrivate.TreeData)
-  ScrollView:SetPadding(0, 2, 0, 0, 2)
+  local ScrollView = CreateScrollBoxListTreeListView(7, 0, 0, 0, 0, 2)
+  ScrollView.GetLayoutFunction = function(self)
+    local setPoint = self:IsHorizontal() and ScrollBoxViewUtil.SetHorizontalPoint or ScrollBoxViewUtil.SetVerticalPoint
+    local scrollTarget = self:GetScrollTarget()
+    local function Layout(index, frame, offset)
+      local elementData = frame:GetElementData()
+      local depth = elementData:GetDepth()
+      local indent = depth < 3 and 0 or ((depth - 1) * self:GetElementIndent())
+      return setPoint(frame, offset, indent, scrollTarget)
+    end
+    return Layout
+  end
+
   OptionsPrivate.ScrollView = ScrollView
 
   ScrollUtil.InitScrollBoxListWithScrollBar(ScrollBox, ScrollBar, ScrollView)
@@ -713,6 +723,7 @@ function OptionsPrivate.CreateFrame()
 
   ScrollView:SetElementFactory(CustomFactory)
   ScrollView:SetElementResetter(Resetter)
+  ScrollView:SetDataProvider(OptionsPrivate.TreeData)
 
   --[[
   local buttonsScroll = AceGUI:Create("ScrollFrame")
