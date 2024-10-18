@@ -817,7 +817,6 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
 
   local aurasMatchingFilter = {}
   local shouldFilter = filter and #filter > 1
-  --local num, total = 0, 0
   local filterTable = shouldFilter and OptionsPrivate.Private.splitAtOr(filter)
 
   if shouldFilter then
@@ -829,7 +828,6 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
           found = true
           for parent in OptionsPrivate.Private.TraverseParents(auraData) do
             aurasMatchingFilter[parent.id] = true
-            --total = total + 1
           end
         end
       end
@@ -839,64 +837,26 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
   rootLoadedNode:Flush()
   rootUnloadedNode:Flush()
 
-  local function func1()
-    local nodes = {}
-    --[[
-    if coroutine.running() then
-      frame:SetLoadProgressVisible(true)
-    end
-    ]]
-    -- show toplevel auras in 1 shot
-    for auraID, data in pairs(db.displays) do
-      if not data.parent then
+  local nodes = {}
+  for _, data in pairs(db.displays) do
+    if not data.parent then
+      for child in OptionsPrivate.Private.TraverseAll(data) do
+        local auraID = child.id
         if not shouldFilter or aurasMatchingFilter[auraID] then
-          local parentNode = OptionsPrivate.Private.loaded[auraID] and rootLoadedNode or rootUnloadedNode
-          local newNode = parentNode:Insert({
-            type = "WeakAurasButton",
-            auraID = auraID
-          })
-          if data.controlledChildren then
+          local parentNode
+          if not child.parent then
+            parentNode = OptionsPrivate.Private.loaded[auraID] and rootLoadedNode or rootUnloadedNode
+          else
+            parentNode = nodes[child.parent]
+          end
+          local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID})
+          if child.controlledChildren then
             newNode:SetCollapsed(true)
           end
           nodes[auraID] = newNode
-          --num = num + 1
         end
       end
     end
-    -- add their children afterwards
-    for _, data in pairs(db.displays) do
-      if not data.parent then
-        for child in OptionsPrivate.Private.TraverseAllChildren(data) do
-          if not shouldFilter or aurasMatchingFilter[child.id] then
-            local parentNode = nodes[child.parent]
-            local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = child.id})
-            if child.controlledChildren then
-              newNode:SetCollapsed(true)
-            end
-            nodes[child.id] = newNode
-            --num = num + 1
-            --frame.loadProgress:SetText(L["Creating buttons: "]..num.."/"..total)
-            --frame.loadProgressNum = num
-            if coroutine.running() then
-              coroutine.yield()
-            end
-          end
-        end
-      end
-    end
-    --[[
-    if coroutine.running() then
-      frame:SetLoadProgressVisible(false)
-    end
-    ]]
-  end
-
-  if shouldFilter then
-    func1()
-  else
-    local co1 = coroutine.create(func1)
-    local threadName = shouldFilter and "LayoutFiltered" or "LayoutUnfiltered"
-    OptionsPrivate.Private.Threads:Add(threadName, co1)
   end
 end
 
