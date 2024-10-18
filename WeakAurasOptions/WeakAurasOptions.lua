@@ -849,7 +849,7 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
           else
             parentNode = nodes[child.parent]
           end
-          local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID})
+          local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = auraID, isFiltered = shouldFilter or nil})
           if child.controlledChildren then
             newNode:SetCollapsed(true)
           end
