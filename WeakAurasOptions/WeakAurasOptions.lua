@@ -815,10 +815,6 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
     return data.type == "loadedHeader" and data.name == "unloaded"
   end, true)
 
-  local function groupComparator(a, b)
-    return a:GetData().index < b:GetData().index
-  end
-
   local aurasMatchingFilter = {}
   local shouldFilter = filter and #filter > 1
   --local num, total = 0, 0
@@ -861,7 +857,6 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
           })
           if data.controlledChildren then
             newNode:SetCollapsed(true)
-            newNode:SetSortComparator(groupComparator, false, true)
           end
           nodes[auraID] = newNode
           --num = num + 1
@@ -874,14 +869,9 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
         for child in OptionsPrivate.Private.TraverseAllChildren(data) do
           if not shouldFilter or aurasMatchingFilter[child.id] then
             local parentNode = nodes[child.parent]
-            local newNode = parentNode:Insert({
-              type = "WeakAurasButton",
-              auraID = child.id,
-              index = parentNode:GetSize() + 1
-            })
+            local newNode = parentNode:Insert({type = "WeakAurasButton", auraID = child.id})
             if child.controlledChildren then
               newNode:SetCollapsed(true)
-              newNode:SetSortComparator(groupComparator, false, true)
             end
             nodes[child.id] = newNode
             --num = num + 1
@@ -1063,16 +1053,13 @@ end
 
 function WeakAuras.NewDisplayButton(data, massEdit)
   local id = data.id;
-  print("WeakAuras.NewDisplayButton", id)
   OptionsPrivate.Private.ScanForLoads({[id] = true});
   if not data.parent then
     local rootLoaded = OptionsPrivate.TreeData:FindByPredicate({type = "loadedHeader", name = "loaded"}, true)
     rootLoaded:Insert({type = "WeakAurasButton", auraID = id})
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
-    local parentData = WeakAuras.GetData(data.parent)
-    local index = tIndexOf(parentData.controlledChildren, id)
-    parentNode:Insert({type = "WeakAurasButton", auraID = id, index = index})
+    parentNode:Insert({type = "WeakAurasButton", auraID = id})
   end
   -- EnsureDisplayButton(db.displays[id]);
   --WeakAuras.UpdateThumbnail(db.displays[id]);
