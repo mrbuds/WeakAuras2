@@ -554,8 +554,8 @@ local methods = {
         while selectedData.parent do
           selectedButton:Ungroup();
         end
-        selectedButton:SetGroup(self.data.id, self.data.regionType == "dynamicgroup");
-        selectedButton:SetGroupOrder(#self.data.controlledChildren, #self.data.controlledChildren);
+        selectedButton:SetGroup(self.data.id, self.data.regionType == "dynamicgroup")
+        selectedButton:SetGroupOrder()
         selectedData.parent = self.data.id;
         if (self.data.regionType == "dynamicgroup") then
           selectedData.xOffset = 0
@@ -699,16 +699,31 @@ local methods = {
           if(index <= 1) then
             error("Attempt to move up the first element in a group")
           else
+            local otherbuttonName = parentData.controlledChildren[index - 1]
             tremove(parentData.controlledChildren, index)
             tinsert(parentData.controlledChildren, index - 1, id)
-            WeakAuras.Add(parentData);
+            WeakAuras.Add(parentData)
             OptionsPrivate.Private.AddParents(parentData)
             WeakAuras.ClearAndUpdateOptions(parentData.id)
-            self:SetGroupOrder(index - 1, #parentData.controlledChildren)
-
-            local otherbuttonName = parentData.controlledChildren[index]
             local otherbutton = OptionsPrivate.GetDisplayButton(otherbuttonName)
-            otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
+            local otherbuttonNode = otherbutton.node
+            local parentNode = self.node:GetParent()
+            parentNode:MoveNodeRelativeTo(self.node, otherbuttonNode, 0)
+            DevTool:AddData(otherbuttonNode, "otherbuttonNode")
+            parentNode:Invalidate()
+            parentNode.dataProvider:TriggerEvent(TreeDataProviderMixin.Event.OnMove, otherbuttonNode, parentNode, parentNode)
+            --self:SetData(WeakAuras.GetData(otherbuttonNode.data.auraID))
+            --otherbutton:SetData(WeakAuras.GetData(id))
+            --self:SetGroupOrder()
+            --otherbutton:SetGroupOrder()
+            --self.node:Invalidate()
+            --otherbuttonNode:Invalidate()
+            --otherbutton:Init(thisbuttonNode)
+            --self:Init(otherbuttonNode)
+            --otherbutton:Init(thisbuttonNode)
+            --self:Init(otherbuttonNode)
+            --self.node.dataProvider:TriggerEvent(TreeDataProviderMixin.Event.OnMove, otherbuttonNode, self.node:GetParent(), self.node)
+            --otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
             --OptionsPrivate.SortDisplayButtons();
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
@@ -720,9 +735,6 @@ local methods = {
               otherbutton.node.data.index = otherbutton.node.data.index - 1
             end)
             ]]
-            self.node.data.index = tIndexOf(parentData.controlledChildren, self.id)
-            otherbutton.node.data.index = tIndexOf(parentData.controlledChildren, otherbutton.id)
-            self.node:GetParent():Sort()
             WeakAuras.FillOptions()
           end
         else
@@ -743,23 +755,40 @@ local methods = {
           if(index >= #parentData.controlledChildren) then
             error("Attempt to move down the last element in a group")
           else
+            local otherbuttonName = parentData.controlledChildren[index + 1]
             tremove(parentData.controlledChildren, index)
             tinsert(parentData.controlledChildren, index + 1, id)
             WeakAuras.Add(parentData);
             OptionsPrivate.Private.AddParents(parentData)
             WeakAuras.ClearAndUpdateOptions(parentData.id)
-            self:SetGroupOrder(index + 1, #parentData.controlledChildren)
-            local otherbuttonName = parentData.controlledChildren[index]
+            
             local otherbutton = OptionsPrivate.GetDisplayButton(otherbuttonName)
-            otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
+            local otherbuttonNode = otherbutton.node
+            self.node:GetParent():MoveNodeRelativeTo(self.node, otherbuttonNode, 1)
+            self:SetData(WeakAuras.GetData(otherbuttonNode.data.auraID))
+            otherbutton:SetData(WeakAuras.GetData(id))
+            self:SetGroupOrder()
+            otherbutton:SetGroupOrder()
+            --self.node:Invalidate()
+            --otherbuttonNode:Invalidate()
+            --otherbutton:Init(thisbuttonNode)
+            --self:Init(otherbuttonNode)
+            --self.node:GetParent():Sort()
+            --DevTool:AddData(self.node, "self.node")
+           -- DevTool:AddData(self.node:GetParent(), "GetParent")
+            --self.node:GetParent():Sort()
+            --self.node.dataProvider:TriggerEvent(TreeDataProviderMixin.Event.OnMove, otherbuttonNode, self.node:GetParent(), self.node)
+            --otherbutton:Init(thisbuttonNode)
+            --self:Init(otherbuttonNode)
+            --otherbutton:SetGroupOrder(index, #parentData.controlledChildren)
             --OptionsPrivate.SortDisplayButtons()
             local updata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = -32}
             local downdata = {duration = 0.15, type = "custom", use_translate = true, x = 0, y = 32}
             --OptionsPrivate.Private.Animate("button", self.data.uid, "main", downdata, self, true, function() self:ReopenGroup() end)
             --OptionsPrivate.Private.Animate("button", WeakAuras.GetData(otherbuttonName).uid, "main", updata, otherbutton, true, function() self:ReopenGroup() end)
-            self.node.data.index = tIndexOf(parentData.controlledChildren, self.id)
-            otherbutton.node.data.index = tIndexOf(parentData.controlledChildren, otherbutton.id)
-            self.node:GetParent():Sort()
+            --self.node.data.index = tIndexOf(parentData.controlledChildren, self.id)
+            --otherbutton.node.data.index = tIndexOf(parentData.controlledChildren, otherbutton.id)
+            --self.node:GetParent():Sort()
             WeakAuras.FillOptions()
           end
         else
@@ -967,7 +996,7 @@ local methods = {
       local index = tIndexOf(parentData.controlledChildren, self.data.id)
       if(index) then
         self:SetGroup(self.data.parent)
-        self:SetGroupOrder(index, #parentData.controlledChildren)
+        self:SetGroupOrder()
       else
         error("Display \""..self.data.id.."\" thinks it is a member of group \""..self.data.parent.."\" which does not control it");
       end
@@ -1300,12 +1329,8 @@ local methods = {
     self.dgroup = group
     if(group) then
       self.icon:SetPoint("LEFT", self.ungroup, "RIGHT")
-      --self.background:ClearAllPoints()
-      --self.background:SetAllPoints(self)
     else
       self.icon:SetPoint("LEFT", self, "LEFT")
-      --self.background:ClearAllPoints()
-      --self.background:SetAllPoints(self)
     end
     self:UpdateIconsVisible()
   end,
@@ -1471,12 +1496,12 @@ local methods = {
       end
     end
   end,
-  ["SetGroupOrder"] = function(self, order, max)
-    self.first = (order == 1)
-    self.last = (order == max)
-    self.dgrouporder = order;
-    local nodeData = self.node:GetData()
-    nodeData.index = order
+  ["SetGroupOrder"] = function(self)
+    local parentNodes = self.node:GetParent():GetNodes()
+    self.dgrouporder = tIndexOf(parentNodes, self.node)
+    print("SetGroupOrder", self.id, self.dgrouporder)
+    self.first = self.dgrouporder == 1
+    self.last = self.dgrouporder == #parentNodes
     self:UpdateUpDownButtons()
   end,
   ["UpdateUpDownButtons"] = function(self)
@@ -1803,6 +1828,7 @@ function WeakAurasDisplayButtonMixin:Init(node)
   self:UpdateWarning()
   self:AcquireThumbnail()
   self:Show()
+  print("INIT", self.id, self.node.data.auraID)
 end
 
 
