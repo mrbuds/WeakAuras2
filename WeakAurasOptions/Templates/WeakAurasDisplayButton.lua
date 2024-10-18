@@ -1127,7 +1127,7 @@ local methods = {
     OptionsPrivate.SortDisplayButtons()
   end,
   ["UpdateIconsVisible"] = function(self)
-    if self.dragging or self.grouping then
+    if self.dragging or self.grouping or self.node.data.isFiltered then
       self.downgroup:Hide()
       self.group:Hide()
       self.ungroup:Hide()
