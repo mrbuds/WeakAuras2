@@ -1015,7 +1015,10 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   local id = data.id;
   OptionsPrivate.Private.ScanForLoads({[id] = true});
   if not data.parent then
-    local rootLoaded = OptionsPrivate.TreeData:FindByPredicate({type = "loadedHeader", name = "loaded"}, true)
+    local predicate = function(node)
+      return node.data.type == "loadedHeader" and node.data.name == "loaded"
+    end
+    local _, rootLoaded = OptionsPrivate.TreeData:FindByPredicate(predicate, true)
     rootLoaded:Insert({type = "WeakAurasButton", auraID = id})
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
