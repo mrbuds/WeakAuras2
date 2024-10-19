@@ -533,19 +533,31 @@ end
 
 local function OnRename(event, uid, oldid, newid)
   local data = OptionsPrivate.Private.GetDataByUID(uid)
-  local oldNode = OptionsPrivate.GetDisplayNode(oldid)
-  local parentNode = oldNode:GetParent()
+  local node = OptionsPrivate.GetDisplayNode(oldid)
+  local button = OptionsPrivate.GetDisplayButton(oldid)
+  --local parentNode = oldNode:GetParent()
+  node.data.auraID = newid
+  if button then
+    button:Init(node)
+    local parentNode = node:GetParent()
+    if parentNode:HasSortComparator() then
+      parentNode:Sort()
+    end
+  end
 
-  parentNode:Insert({type = "WeakAurasButton", auraID = newid, index = oldNode:GetData().index})
+  --parentNode:Insert({type = "WeakAurasButton", auraID = newid})
   OptionsPrivate.ClearOptions(oldid)
   collapsedOptions[newid] = collapsedOptions[oldid]
   collapsedOptions[oldid] = nil
   if(data.controlledChildren) then
     for _, childId in pairs(data.controlledChildren) do
-      OptionsPrivate.GetDisplayButton(childId):SetGroup(newid)
+      local childButton = OptionsPrivate.GetDisplayButton(childId)
+      if childButton then
+        childButton:SetGroup(newid)
+      end
     end
   end
-  parentNode:Remove(oldNode)
+  --parentNode:Remove(oldNode)
   OptionsPrivate.StopGrouping()
 
   frame:OnRename(uid, oldid, newid)
