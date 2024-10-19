@@ -1291,7 +1291,7 @@ local methods = {
   end,
   ["SetGroup"] = function(self, group)
     self.dgroup = group
-    if(group) then
+    if group and not self.node.data.isFiltered then
       self.icon:SetPoint("LEFT", self.ungroup, "RIGHT")
     else
       self.icon:SetPoint("LEFT", self, "LEFT")
