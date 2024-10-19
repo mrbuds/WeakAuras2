@@ -494,7 +494,8 @@ end
 local function AfterScanForLoads()
   if(frame) then
     if (frame:IsVisible()) then
-      OptionsPrivate.SortDisplayButtons(nil, true);
+      --OptionsPrivate.SortDisplayButtons(nil, true);
+      OptionsPrivate.CheckNodesLoadStatus()
     else
       frame.needsSort = true;
     end
@@ -857,7 +858,7 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
         if not shouldFilter or aurasMatchingFilter[auraID] then
           local parentNode
           if not child.parent then
-            parentNode = OptionsPrivate.Private.loaded[auraID] and rootLoadedNode or rootUnloadedNode
+            parentNode = (OptionsPrivate.Private.loaded[auraID] ~= nil) and rootLoadedNode or rootUnloadedNode
           else
             parentNode = nodes[child.parent]
           end
@@ -870,6 +871,52 @@ function OptionsPrivate.RefreshNodes(rootNode, filter)
       end
     end
   end
+end
+
+function OptionsPrivate.CheckNodesLoadStatus()
+  local rootNode = OptionsPrivate.TreeData
+  local _, rootLoadedNode = rootNode:FindByPredicate(function(node)
+    local data = node:GetData()
+    return data.type == "loadedHeader" and data.name == "loaded"
+  end, true)
+
+  local _, rootUnloadedNode = rootNode:FindByPredicate(function(node)
+    local data = node:GetData()
+    return data.type == "loadedHeader" and data.name == "unloaded"
+  end, true)
+
+  -- move to correct section load & unloaded top level auras
+
+  local unloadedChanged = false
+  for _, node in ipairs(rootLoadedNode:GetNodes()) do
+    if OptionsPrivate.Private.loaded[node.data.auraID] == nil then
+      rootUnloadedNode:MoveNode(node)
+      unloadedChanged = true
+    end
+  end
+  if unloadedChanged then
+    rootUnloadedNode:Sort()
+  end
+
+  local loadedChanged = false
+  for _, node in ipairs(rootUnloadedNode:GetNodes()) do
+    if OptionsPrivate.Private.loaded[node.data.auraID] ~= nil then
+      rootLoadedNode:MoveNode(node)
+      loadedChanged = true
+    end
+  end
+  if loadedChanged then
+    rootUnloadedNode:Sort()
+  end
+
+  -- TODO, as usual :Sort() doesn't update display..
+
+  -- update loaded indicator for all visible buttons
+  OptionsPrivate.ScrollBox:ForEachFrame(function(button)
+    if button.node.data.type == "WeakAurasButton" then
+      button:SetLoaded()
+    end
+  end)
 end
 
 function WeakAuras.ShowOptions(msg)
@@ -899,10 +946,10 @@ function WeakAuras.ShowOptions(msg)
 
   --frame.buttonsScroll.frame:Show();
 
-  if (frame.needsSort) then
-    OptionsPrivate.SortDisplayButtons();
-    frame.needsSort = nil;
-  end
+  --if (frame.needsSort) then
+  --  OptionsPrivate.SortDisplayButtons();
+  --  frame.needsSort = nil;
+  --end
 
   frame:Show();
 

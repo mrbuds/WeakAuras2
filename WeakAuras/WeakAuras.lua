@@ -1794,11 +1794,26 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
         end
       end
       if(shouldBeLoaded) then
-        loaded[id] = true;
+        if loaded[id] ~= true then
+          for parent in Private.TraverseParents(data) do
+            parentsToCheck[parent.id] = true
+          end
+        end
+        loaded[id] = true
       elseif(couldBeLoaded) then
-        loaded[id] = false;
+        if loaded[id] ~= false then
+          for parent in Private.TraverseParents(data) do
+            parentsToCheck[parent.id] = true
+          end
+        end
+        loaded[id] = false
       else
-        loaded[id] = nil;
+        if loaded[id] ~= nil then
+          for parent in Private.TraverseParents(data) do
+            parentsToCheck[parent.id] = true
+          end
+        end
+        loaded[id] = nil
       end
     end
   end
@@ -1822,22 +1837,22 @@ function Private.ScanForLoadsGroup(toCheck)
     if(data.controlledChildren) then
       if(#data.controlledChildren > 0) then
         ---@type boolean?
-        local any_loaded = false;
+        local any_loaded = nil
         for child in Private.TraverseLeafs(data) do
-          if(loaded[child.id] ~= nil) then
-            any_loaded = true;
-            break;
-          else
-            any_loaded = nil
+          if loaded[child.id] == true then
+            any_loaded = true
+            break
+          elseif loaded[child.id] == false then
+            any_loaded = false
           end
         end
-        if any_loaded then
+        if any_loaded ~= nil then
           Private.EnsureRegion(id)
         end
-        loaded[id] = any_loaded;
+        loaded[id] = any_loaded
       else
         Private.EnsureRegion(id)
-        loaded[id] = true;
+        loaded[id] = true
       end
     end
   end
