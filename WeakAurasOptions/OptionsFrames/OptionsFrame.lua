@@ -1186,7 +1186,8 @@ function OptionsPrivate.CreateFrame()
 
   frame.ClearPicks = function(self, noHide)
     local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
-    OptionsPrivate.TreeData:ForEach(function(node)
+    local dataProvider = OptionsPrivate.ScrollView:GetDataProvider()
+    dataProvider:ForEach(function(node)
       if node.data.picked then
         local button = OptionsPrivate.SearchNodeButton(node)
         if button then
