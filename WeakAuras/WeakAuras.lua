@@ -1846,7 +1846,7 @@ function Private.ScanForLoadsGroup(toCheck)
             any_loaded = false
           end
         end
-        if any_loaded ~= nil then
+        if any_loaded then
           Private.EnsureRegion(id)
         end
         loaded[id] = any_loaded
