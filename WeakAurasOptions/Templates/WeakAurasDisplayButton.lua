@@ -1491,8 +1491,59 @@ local methods = {
     self:ClearStatusIcon("load")
     self:SortStatusIcons()
   end,
-  ["SetLoaded"] = function(self, prio, color, title, description)
-    self:UpdateStatusIcon("load", prio, "Interface\\AddOns\\WeakAuras\\Media\\Textures\\loaded", title, description, nil, color)
+  ["SetLoaded"] = function(self)
+    local prio, color, title, description
+    if self.data.controlledChildren then
+      local hasLoaded, hasStandBy, hasNotLoaded = 0, 0, 0
+      for leaf in OptionsPrivate.Private.TraverseLeafs(self.data) do
+        local id = leaf.id
+        if OptionsPrivate.Private.loaded[id] == true then
+          hasLoaded = hasLoaded + 1
+        elseif OptionsPrivate.Private.loaded[id] == false then
+          hasStandBy = hasStandBy + 1
+        else
+          hasNotLoaded = hasNotLoaded + 1
+        end
+      end
+      if hasLoaded > 0 then
+        prio = 1
+        color = {0, 0.68, 0.30, 1}
+        title = L["Loaded"]
+        description = L["%d displays loaded"]:format(hasLoaded)
+      elseif hasStandBy > 0 then
+        prio = 2
+        color = {0.96, 0.82, 0.16, 1}
+        title = L["Standby"]
+        description = L["%d displays on standby"]:format(hasStandBy)
+      elseif hasNotLoaded > 0 then
+        prio = 3
+        color = {0.6, 0.6, 0.6, 1}
+        title = L["Not Loaded"]
+        description = L["%d displays not loaded"]:format(hasNotLoaded)
+      else
+        self:ClearLoaded()
+      end
+    else
+      if self:IsLoaded() then
+        prio = 1
+        color = {0, 0.68, 0.30, 1}
+        title = L["Loaded"]
+        description = L["This display is currently loaded"]
+      elseif self:IsStandby() then
+        prio = 2
+        color = {0.96, 0.82, 0.16, 1}
+        title = L["Standby"]
+        description = L["This display is on standby, it will be loaded when needed."]
+      elseif self:IsUnloaded() then
+        prio = 3
+        color = {0.6, 0.6, 0.6, 1}
+        title = L["Not Loaded"]
+        decription = L["This display is not currently loaded"]
+      end
+    end
+    if prio ~= nil then
+      self:UpdateStatusIcon("load", prio, "Interface\\AddOns\\WeakAuras\\Media\\Textures\\loaded", title, description, nil, color)
+    end
     self:SortStatusIcons()
   end,
   ["IsLoaded"] = function(self)
@@ -1790,6 +1841,7 @@ function WeakAurasDisplayButtonMixin:Init(node)
   self:Initialize()
   self:UpdateWarning()
   self:AcquireThumbnail()
+  self:SetLoaded()
   self:Show()
 end
 
