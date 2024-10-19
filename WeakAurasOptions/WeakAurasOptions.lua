@@ -1436,8 +1436,8 @@ function OptionsPrivate.SearchDisplayNode(id, parentNode)
   local predicate = function(node)
     return id == node:GetData().auraID
   end
-  parentNode = parentNode and parentNode.dataProvider or OptionsPrivate.TreeData
-  local _, node = parentNode:FindByPredicate(predicate, true)
+  local dataProvider = parentNode and parentNode.dataProvider or OptionsPrivate.ScrollView:GetDataProvider()
+  local _, node = dataProvider:FindByPredicate(predicate, true)
   return node
 end
 
