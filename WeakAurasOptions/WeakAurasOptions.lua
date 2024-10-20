@@ -1049,6 +1049,7 @@ function OptionsPrivate.OpenUpdate(data, children, target, linkedAuras, sender, 
   return OptionsPrivate.UpdateFrame(frame):Open(data, children, target, linkedAuras, sender, callbackFunc)
 end
 
+-- TODO FIX IT
 function OptionsPrivate.ConvertDisplay(data, newType)
   local id = data.id;
   local visibility = displayButtons[id]:GetVisibility();
