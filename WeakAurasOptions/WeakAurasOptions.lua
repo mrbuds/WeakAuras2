@@ -886,37 +886,29 @@ function OptionsPrivate.CheckNodesLoadStatus()
   end, true)
 
   -- move to correct section load & unloaded top level auras
-
-  local unloadedChanged = false
   for _, node in ipairs(rootLoadedNode:GetNodes()) do
     if OptionsPrivate.Private.loaded[node.data.auraID] == nil then
       rootUnloadedNode:MoveNode(node)
-      unloadedChanged = true
     end
   end
-  if unloadedChanged then
-    rootUnloadedNode:Sort()
-  end
-
-  local loadedChanged = false
   for _, node in ipairs(rootUnloadedNode:GetNodes()) do
     if OptionsPrivate.Private.loaded[node.data.auraID] ~= nil then
       rootLoadedNode:MoveNode(node)
-      loadedChanged = true
     end
   end
-  if loadedChanged then
-    rootUnloadedNode:Sort()
-  end
 
-  -- TODO, as usual :Sort() doesn't update display..
-
+  --[[ commented because Rebuild() handle it
   -- update loaded indicator for all visible buttons
   OptionsPrivate.ScrollBox:ForEachFrame(function(button)
     if button.node.data.type == "WeakAurasButton" then
       button:SetLoaded()
     end
   end)
+  ]]
+
+  -- this solve moved buttons shown incorrectly at end of un(loaded) section
+  -- maybe there is a better solution??
+  OptionsPrivate.ScrollBox:Rebuild(true)
 end
 
 function WeakAuras.ShowOptions(msg)
