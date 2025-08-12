@@ -1369,7 +1369,7 @@ local methods = {
       self:Collapse()
     end
   end,
-  ["UpdateStatusIcon"] = function(self, key, prio, icon, title, tooltip, onClick, color)
+  ["UpdateStatusIcon"] = function(self, key, prio, icon, title, tooltip, onClick)
     local iconButton
     for _, button in ipairs(self.statusIcons.buttons) do
       if button.key == key then
@@ -1401,11 +1401,6 @@ local methods = {
       iconButton:SetScript("OnLeave", Hide_Tooltip)
     else
       iconButton:SetScript("OnEnter", nil)
-    end
-    if color then
-      iconButton:GetNormalTexture():SetVertexColor(unpack(color))
-    else
-      iconButton:GetNormalTexture():SetVertexColor(1, 1, 1, 1)
     end
     iconButton:SetScript("OnClick", onClick)
     iconButton:Show()
@@ -1492,7 +1487,7 @@ local methods = {
     self:SortStatusIcons()
   end,
   ["SetLoaded"] = function(self)
-    local prio, color, title, description
+    local prio, file, title, description
     if self.data.controlledChildren then
       local hasLoaded, hasStandBy, hasNotLoaded = 0, 0, 0
       for leaf in OptionsPrivate.Private.TraverseLeafs(self.data) do
@@ -1507,17 +1502,17 @@ local methods = {
       end
       if hasLoaded > 0 then
         prio = 1
-        color = {0, 0.68, 0.30, 1}
+        file = "loaded"
         title = L["Loaded"]
         description = L["%d displays loaded"]:format(hasLoaded)
       elseif hasStandBy > 0 then
         prio = 2
-        color = {0.96, 0.82, 0.16, 1}
+        file = "standby"
         title = L["Standby"]
         description = L["%d displays on standby"]:format(hasStandBy)
       elseif hasNotLoaded > 0 then
         prio = 3
-        color = {0.6, 0.6, 0.6, 1}
+        file = "unloaded"
         title = L["Not Loaded"]
         description = L["%d displays not loaded"]:format(hasNotLoaded)
       else
@@ -1526,23 +1521,23 @@ local methods = {
     else
       if self:IsLoaded() then
         prio = 1
-        color = {0, 0.68, 0.30, 1}
+        file = "loaded"
         title = L["Loaded"]
         description = L["This display is currently loaded"]
       elseif self:IsStandby() then
         prio = 2
-        color = {0.96, 0.82, 0.16, 1}
+        file = "standby"
         title = L["Standby"]
         description = L["This display is on standby, it will be loaded when needed."]
       elseif self:IsUnloaded() then
         prio = 3
-        color = {0.6, 0.6, 0.6, 1}
+        file = "unloaded"
         title = L["Not Loaded"]
         decription = L["This display is not currently loaded"]
       end
     end
     if prio ~= nil then
-      self:UpdateStatusIcon("load", prio, "Interface\\AddOns\\WeakAuras\\Media\\Textures\\loaded", title, description, nil, color)
+      self:UpdateStatusIcon("load", prio, "Interface\\AddOns\\WeakAuras\\Media\\Textures\\" .. file, title, description)
     end
     self:SortStatusIcons()
   end,
