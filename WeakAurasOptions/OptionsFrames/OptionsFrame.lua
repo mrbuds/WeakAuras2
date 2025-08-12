@@ -764,6 +764,8 @@ function OptionsPrivate.CreateFrame()
   OptionsPrivate.TreeDataFiltered = CreateTreeDataProvider()
 
   local ScrollView = CreateScrollBoxListTreeListView(7, 0, 0, 0, 0, 2)
+  
+  --[[ i dont remember why i added it here but it break anchoring
   ScrollView.GetLayoutFunction = function(self)
     local setPoint = self:IsHorizontal() and ScrollBoxViewUtil.SetHorizontalPoint or ScrollBoxViewUtil.SetVerticalPoint
     local scrollTarget = self:GetScrollTarget()
@@ -775,6 +777,7 @@ function OptionsPrivate.CreateFrame()
     end
     return Layout
   end
+  ]]
 
   OptionsPrivate.ScrollView = ScrollView
 
