@@ -764,7 +764,7 @@ function OptionsPrivate.CreateFrame()
   OptionsPrivate.TreeDataFiltered = CreateTreeDataProvider()
 
   local ScrollView = CreateScrollBoxListTreeListView(7, 0, 0, 0, 0, 2)
-  
+
   --[[ i dont remember why i added it here but it break anchoring
   ScrollView.GetLayoutFunction = function(self)
     local setPoint = self:IsHorizontal() and ScrollBoxViewUtil.SetHorizontalPoint or ScrollBoxViewUtil.SetVerticalPoint
@@ -1484,10 +1484,8 @@ function OptionsPrivate.CreateFrame()
   end
 
   frame.PickDisplay = function(self, id, tab, noHide)
-    local data = WeakAuras.GetData(id)
-
     -- Always expand even if already picked
-    local button = OptionsPrivate.GetDisplayButton(data.id)
+    local button = OptionsPrivate.GetDisplayButton(id)
 
     --[[
     if OptionsPrivate.Private.loaded[id] ~= nil then
@@ -1511,7 +1509,10 @@ function OptionsPrivate.CreateFrame()
 
     self:ClearPicks(noHide)
 
-    button:Pick()
+    if button then
+      button:Pick()
+    end
+
     self.pickedDisplay = id
 
 
@@ -1536,7 +1537,9 @@ function OptionsPrivate.CreateFrame()
       displayButtons[child.id]:PriorityShow(1)
     end
     ]]
-    button:RecheckParentVisibility()
+    if button then
+      button:RecheckParentVisibility()
+    end
 
     OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
   end
