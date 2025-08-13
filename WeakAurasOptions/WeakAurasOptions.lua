@@ -1563,7 +1563,7 @@ function OptionsPrivate.SyncGroupNodeOrder(groupID)
   if not groupNode then return end
 
   local nodeMap = {}
-  local children = groupNode.GetChildren and groupNode:GetChildren() or {}
+  local children = groupNode:GetNodes()
   for _, childNode in ipairs(children) do
     local data = childNode:GetData()
     if data.auraID then
@@ -1574,9 +1574,10 @@ function OptionsPrivate.SyncGroupNodeOrder(groupID)
   for desiredIndex, auraID in ipairs(groupData.controlledChildren) do
     local childNode = nodeMap[auraID]
     if childNode then
-      local currentIndex = tIndexOf(groupNode:GetNodes(), childNode)
+      local currentIndex = tIndexOf(children, childNode)
       if currentIndex and currentIndex ~= desiredIndex then
-        groupNode:MoveNodeRelativeTo(groupNode, childNode, desiredIndex)
+        groupNode:Remove(childNode)
+        groupNode:InsertNode(childNode, desiredIndex)
       end
     end
   end
@@ -1599,22 +1600,12 @@ function OptionsPrivate.SyncAuraNodePosition(auraID)
   local childNode = OptionsPrivate.SearchDisplayNode(auraID, groupNode)
   if not childNode then return end
 
-  local desiredIndex
-  for i, id in ipairs(groupData.controlledChildren) do
-    if id == auraID then
-      desiredIndex = i
-      break
-    end
-  end
-
-  if not desiredIndex then
-    groupNode:RemoveNode(childNode)
-    return
-  end
-
+  local desiredIndex = tIndexOf(groupData.controlledChildren, auraID)
   local currentIndex = tIndexOf(groupNode:GetNodes(), childNode)
   if currentIndex and currentIndex ~= desiredIndex then
-    groupNode:MoveNodeRelativeTo(groupNode, childNode, desiredIndex)
+    print("Moving node", auraID, "from index", currentIndex, "to", desiredIndex)
+    groupNode:Remove(childNode)
+    groupNode:InsertNode(childNode, desiredIndex)
   end
 end
 
