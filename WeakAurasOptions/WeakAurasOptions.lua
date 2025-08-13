@@ -285,7 +285,7 @@ local function CreateNewGroupFromSelection(regionType, resetChildPositions)
     WeakAuras.Add(parentData);
     OptionsPrivate.Private.AddParents(parentData)
     WeakAuras.NewDisplayButton(data);
-    WeakAuras.UpdateGroupOrders(parentData);
+    OptionsPrivate.SyncGroupNodeOrder(parentData.id)
     OptionsPrivate.ClearOptions(parentData.id);
 
     local parentButton = OptionsPrivate.GetDisplayButton(parent)
@@ -309,7 +309,7 @@ local function CreateNewGroupFromSelection(regionType, resetChildPositions)
       tremove(oldParentData.controlledChildren, oldIndex)
       WeakAuras.Add(oldParentData)
       OptionsPrivate.Private.AddParents(oldParentData)
-      WeakAuras.UpdateGroupOrders(oldParentData);
+      OptionsPrivate.SyncGroupNodeOrder(oldParentData.id)
       WeakAuras.ClearAndUpdateOptions(oldParent);
       local oldParentButton = OptionsPrivate.GetDisplayButton(oldParent)
       oldParentButton.callbacks.UpdateExpandButton();
@@ -793,7 +793,7 @@ function OptionsPrivate.DeleteAuras(auras, parents)
       for id in pairs(parents) do
         local parentData = WeakAuras.GetData(id)
         local parentButton = OptionsPrivate.GetDisplayButton(id)
-        WeakAuras.UpdateGroupOrders(parentData)
+        OptionsPrivate.SyncGroupNodeOrder(parentData.id)
         if(#parentData.controlledChildren == 0) then
           parentButton:DisableExpand()
         else
@@ -1075,6 +1075,7 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   else
     local parentNode = OptionsPrivate.GetDisplayNode(data.parent)
     parentNode:Insert({type = "WeakAurasButton", auraID = id})
+    OptionsPrivate.SyncAuraNodePosition(id)
   end
   -- EnsureDisplayButton(db.displays[id]);
   --WeakAuras.UpdateThumbnail(db.displays[id]);
@@ -1082,17 +1083,6 @@ function WeakAuras.NewDisplayButton(data, massEdit)
   --if not massEdit then
   --  OptionsPrivate.SortDisplayButtons()
   --end
-end
-
-function WeakAuras.UpdateGroupOrders(data)
-  print("WeakAuras.UpdateGroupOrders")
-  if(data.controlledChildren) then
-    local total = #data.controlledChildren;
-    for index, id in ipairs(data.controlledChildren) do
-      local node = OptionsPrivate.GetDisplayNode(id)
-      node.data.index = index
-    end
-  end
 end
 
 local function addButton(button, aurasMatchingFilter, visible)
@@ -1488,21 +1478,39 @@ end
 ---@param parentNode? node
 ---@return node?
 function OptionsPrivate.SearchDisplayNode(id, parentNode)
-  local predicate = function(node)
-    return id == node:GetData().auraID
+  local provider
+  if parentNode and parentNode.GetChildren then
+    provider = parentNode.dataProvider
+  else
+    if not OptionsPrivate.ScrollView or not OptionsPrivate.ScrollView.GetDataProvider then
+      return
+    end
+    provider = OptionsPrivate.ScrollView:GetDataProvider()
   end
-  local dataProvider = parentNode and parentNode.dataProvider or OptionsPrivate.ScrollView:GetDataProvider()
-  local _, node = dataProvider:FindByPredicate(predicate, true)
+
+  if not provider or not provider.FindByPredicate then
+    return
+  end
+
+  local predicate = function(node)
+    local data = node.GetData and node:GetData()
+    return data and data.auraID == id
+  end
+
+  local _, node = provider:FindByPredicate(predicate, true)
   return node
 end
 
 ---@param node
 ---@return button?
 function OptionsPrivate.SearchNodeButton(node)
+  if not node or not OptionsPrivate.ScrollBox then return end
   return OptionsPrivate.ScrollBox:FindFrame(node)
 end
 
 function OptionsPrivate.GetDisplayNode(id)
+  if not id then return end
+
   local node = OptionsPrivate.SearchDisplayNode(id)
   if not node then
     local data = WeakAuras.GetData(id)
@@ -1528,18 +1536,85 @@ end
 
 function OptionsPrivate.GetDisplayButton(id)
   if not id then return end
+
   local node = OptionsPrivate.GetDisplayNode(id)
-  if node then
-    local button = OptionsPrivate.ScrollBox:FindFrame(node)
-    if button then
-      return button
-    else
-      local predicate = function(elementData)
-        return elementData:GetData().auraID == id
-      end
-      OptionsPrivate.ScrollBox:ScrollToElementDataByPredicate(predicate, ScrollBoxConstants.AlignCenter)
-      return OptionsPrivate.ScrollBox:FindFrame(node)
+  if not node then return end
+
+  local button = OptionsPrivate.ScrollBox:FindFrame(node)
+  if button then
+    return button
+  end
+
+  local predicate = function(elementData)
+      local data = elementData.GetData and elementData:GetData()
+      return data and data.auraID == id
+  end
+  OptionsPrivate.ScrollBox:ScrollToElementDataByPredicate(predicate, ScrollBoxConstants.AlignCenter)
+  return OptionsPrivate.SearchNodeButton(node)
+end
+
+-- Syncs the order of nodes in a group with the order of controlledChildren in the group data.
+---@param groupID auraId
+function OptionsPrivate.SyncGroupNodeOrder(groupID)
+  local groupData = WeakAuras.GetData(groupID)
+  if not groupData or not groupData.controlledChildren then return end
+
+  local groupNode = OptionsPrivate.SearchDisplayNode(groupID)
+  if not groupNode then return end
+
+  local nodeMap = {}
+  local children = groupNode.GetChildren and groupNode:GetChildren() or {}
+  for _, childNode in ipairs(children) do
+    local data = childNode:GetData()
+    if data.auraID then
+      nodeMap[data.auraID] = childNode
     end
+  end
+
+  for desiredIndex, auraID in ipairs(groupData.controlledChildren) do
+    local childNode = nodeMap[auraID]
+    if childNode then
+      local currentIndex = tIndexOf(groupNode:GetNodes(), childNode)
+      if currentIndex and currentIndex ~= desiredIndex then
+        groupNode:MoveNodeRelativeTo(groupNode, childNode, desiredIndex)
+      end
+    end
+  end
+end
+
+--- Syncs the position of an aura node within its parent group based on the order in controlledChildren
+--- @param auraID auraId
+function OptionsPrivate.SyncAuraNodePosition(auraID)
+  print("SyncAuraNodePosition", auraID)
+  local auraData = WeakAuras.GetData(auraID)
+  if not auraData or not auraData.parent then return end
+
+  local groupID = auraData.parent
+  local groupData = WeakAuras.GetData(groupID)
+  if not groupData or not groupData.controlledChildren then return end
+
+  local groupNode = OptionsPrivate.SearchDisplayNode(groupID)
+  if not groupNode then return end
+
+  local childNode = OptionsPrivate.SearchDisplayNode(auraID, groupNode)
+  if not childNode then return end
+
+  local desiredIndex
+  for i, id in ipairs(groupData.controlledChildren) do
+    if id == auraID then
+      desiredIndex = i
+      break
+    end
+  end
+
+  if not desiredIndex then
+    groupNode:RemoveNode(childNode)
+    return
+  end
+
+  local currentIndex = tIndexOf(groupNode:GetNodes(), childNode)
+  if currentIndex and currentIndex ~= desiredIndex then
+    groupNode:MoveNodeRelativeTo(groupNode, childNode, desiredIndex)
   end
 end
 
@@ -2120,6 +2195,7 @@ function WeakAuras.NewAura(sourceData, regionType, targetId)
         group = target;
       else
         group = OptionsPrivate.GetDisplayButton(target.data.parent);
+        print("targetID", targetId, "target.data.parent", target.data.parent)
       end
       if (group) then
         -- Sanity check so that we don't create a group/dynamic group in a group
@@ -2142,7 +2218,6 @@ function WeakAuras.NewAura(sourceData, regionType, targetId)
         WeakAuras.Add(group.data);
         OptionsPrivate.Private.AddParents(group.data)
         WeakAuras.NewDisplayButton(data);
-        WeakAuras.UpdateGroupOrders(group.data);
         OptionsPrivate.ClearOptions(group.data.id);
         group.callbacks.UpdateExpandButton();
         group:UpdateParentWarning();

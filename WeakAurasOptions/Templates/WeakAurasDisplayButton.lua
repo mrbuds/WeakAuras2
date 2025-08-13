@@ -305,7 +305,7 @@ local Actions = {
           WeakAuras.Add(source.data)
           WeakAuras.Add(group.data)
           OptionsPrivate.Private.AddParents(group.data)
-          WeakAuras.UpdateGroupOrders(group.data)
+          OptionsPrivate.SyncGroupNodeOrder(group.data.id)
           WeakAuras.ClearAndUpdateOptions(group.data.id)
           WeakAuras.ClearAndUpdateOptions(source.data.id)
           group.callbacks.UpdateExpandButton();
@@ -336,7 +336,7 @@ local Actions = {
         source.data.parent = nil
         WeakAuras.Add(parent);
         OptionsPrivate.Private.AddParents(parent)
-        WeakAuras.UpdateGroupOrders(parent);
+        OptionsPrivate.SyncGroupNodeOrder(parent.id);
         WeakAuras.ClearAndUpdateOptions(parent.id);
         local group = OptionsPrivate.GetDisplayButton(parent.id)
         group.callbacks.UpdateExpandButton();
@@ -580,7 +580,7 @@ local methods = {
       OptionsPrivate.StopGrouping();
       OptionsPrivate.ClearOptions(self.data.id);
       WeakAuras.FillOptions();
-      WeakAuras.UpdateGroupOrders(self.data);
+      OptionsPrivate.SyncGroupNodeOrder(self.data.id);
       OptionsPrivate.SortDisplayButtons();
       self:ReloadTooltip();
       self:Expand()
@@ -1107,10 +1107,10 @@ local methods = {
       WeakAuras.Add(newParent)
       OptionsPrivate.Private.AddParents(newParent)
       WeakAuras.ClearAndUpdateOptions(newParent.id)
-      WeakAuras.UpdateGroupOrders(newParent)
+      OptionsPrivate.SyncGroupNodeOrder(newParent.id)
     end
     WeakAuras.ClearAndUpdateOptions(self.data.id)
-    WeakAuras.UpdateGroupOrders(parentData)
+    OptionsPrivate.SyncGroupNodeOrder(parentData.id)
     local parentButton = OptionsPrivate.GetDisplayButton(parentData.id)
     if(#parentData.controlledChildren == 0) then
       parentButton:DisableExpand()

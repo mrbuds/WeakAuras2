@@ -2046,7 +2046,7 @@ local methods = {
       end
       button.callbacks.UpdateExpandButton()
       button:UpdateParentWarning()
-      WeakAuras.UpdateGroupOrders(data)
+      OptionsPrivate.SyncGroupNodeOrder(data.id)
       WeakAuras.UpdateThumbnail(data)
       WeakAuras.ClearAndUpdateOptions(data.id)
       self:IncProgress10()
@@ -2108,7 +2108,7 @@ local methods = {
       end
       button.callbacks.UpdateExpandButton()
       button:UpdateParentWarning()
-      WeakAuras.UpdateGroupOrders(data)
+      OptionsPrivate.SyncGroupNodeOrder(data.id)
       WeakAuras.UpdateThumbnail(data)
       WeakAuras.ClearAndUpdateOptions(data.id)
       self:IncProgress()
