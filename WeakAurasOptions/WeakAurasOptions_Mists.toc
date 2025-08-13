@@ -112,3 +112,7 @@ AceGUI-Widgets\AceGUIWidget-WeakAurasInputFocus.lua
 AceGUI-Widgets\AceGUIWidget-WeakAurasInputWithIndentation.lua
 AceGUI-Widgets\AceGuiWidget-WeakAurasMediaSound.lua
 AceGUI-Widgets\WeakAurasStatusbarAtlasWidget.lua
+
+Templates\WeakAurasDisplayButton.lua
+Templates\WeakAurasLoadedHeaderButton.lua
+Templates\WeakAurasDisplayButton.xml
