@@ -1586,7 +1586,6 @@ end
 --- Syncs the position of an aura node within its parent group based on the order in controlledChildren
 --- @param auraID auraId
 function OptionsPrivate.SyncAuraNodePosition(auraID)
-  print("SyncAuraNodePosition", auraID)
   local auraData = WeakAuras.GetData(auraID)
   if not auraData or not auraData.parent then return end
 
@@ -1603,7 +1602,6 @@ function OptionsPrivate.SyncAuraNodePosition(auraID)
   local desiredIndex = tIndexOf(groupData.controlledChildren, auraID)
   local currentIndex = tIndexOf(groupNode:GetNodes(), childNode)
   if currentIndex and currentIndex ~= desiredIndex then
-    print("Moving node", auraID, "from index", currentIndex, "to", desiredIndex)
     groupNode:Remove(childNode)
     groupNode:InsertNode(childNode, desiredIndex)
   end
