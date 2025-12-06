@@ -1,4 +1,4 @@
-## Interface: 205505
+## Interface: 20505
 ## Title: WeakAuras Model Paths
 ## Author: The WeakAuras Team
 ## Version: @project-version@
@@ -15,4 +15,4 @@
 ## Dependencies: WeakAuras, WeakAurasOptions
 ## AllowLoadGameType: tbc
 
-ModelPathsBCC.lua
+ModelPathsTBC.lua

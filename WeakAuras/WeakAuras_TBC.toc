@@ -1,4 +1,4 @@
-## Interface: 205505
+## Interface: 20505
 ## Title: WeakAuras
 ## Author: The WeakAuras Team
 ## Version: @project-version@
@@ -26,9 +26,6 @@ embeds.xml
 
 # TaintLess
 Libs\TaintLess\TaintLess.xml
-
-# Client flavor specific libs
-Libs\LibSpecialization\LibSpecialization.lua
 
 Init.lua
 Compatibility.lua
