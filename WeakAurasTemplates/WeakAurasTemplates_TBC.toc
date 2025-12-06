@@ -1,8 +1,11 @@
-## Interface: 20504
+## Interface: 20505
 ## Title: WeakAuras Templates
 ## Author: The WeakAuras Team
 ## Version: @project-version@
+## IconTexture: Interface\AddOns\WeakAuras\Media\Textures\icon.blp
 ## Notes: Templates for WeakAuras
+## Notes-esES: Plantillas para WeakAuras
+## Notes-esMX: Plantillas para WeakAuras
 ## X-Category: Interface Enhancements
 ## Globe-Main: WeakAuras
 ## DefaultState: Enabled
@@ -12,6 +15,6 @@
 locales.xml
 
 TriggerTemplates.lua
-TriggerTemplatesDataBCC.lua
+TriggerTemplatesDataTBC.lua
 
 AceGUI-Widgets\AceGUIContainer-WeakAurasTemplateGroup.lua

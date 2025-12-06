@@ -1998,7 +1998,7 @@ end
 do
   local mh = GetInventorySlotInfo("MainHandSlot")
   local oh = GetInventorySlotInfo("SecondaryHandSlot")
-  local ranged = WeakAuras.IsClassicOrWrath() and GetInventorySlotInfo("RangedSlot")
+  local ranged = WeakAuras.IsClassicOrTBCOrWrath() and GetInventorySlotInfo("RangedSlot")
 
   local swingTimerFrame;
   local lastSwingMain, lastSwingOff, lastSwingRange;
@@ -2193,7 +2193,7 @@ do
         end)
       end
       if Private.reset_ranged_swing_spells[spell] then
-        if WeakAuras.IsClassicOrWrath() then
+        if WeakAuras.IsClassicOrTBCOrWrath() then
           swingStart("ranged")
         else
           swingStart("main")
@@ -2226,7 +2226,7 @@ do
       swingTimerFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
       swingTimerFrame:RegisterUnitEvent("UNIT_ATTACK_SPEED", "player");
       swingTimerFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player");
-      if WeakAuras.IsClassicOrWrath() then
+      if WeakAuras.IsClassicOrTBCOrWrath() then
         swingTimerFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
         swingTimerFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "player")
         swingTimerFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
@@ -2288,7 +2288,7 @@ do
   local function CheckGCD()
     local event;
     local startTime, duration, _, modRate
-    if WeakAuras.IsClassicOrWrath() then
+    if WeakAuras.IsClassicOrTBCOrWrath() then
       startTime, duration = GetSpellCooldown(29515);
       shootStart, shootDuration = GetSpellCooldown(5019)
     elseif GetSpellCooldown then
@@ -2407,7 +2407,7 @@ do
 
     if duration > 0 then
       if (startTime == gcdStart and duration == gcdDuration)
-          or (WeakAuras.IsClassicOrWrath() and duration == shootDuration and startTime == shootStart)
+          or (WeakAuras.IsClassicOrTBCOrWrath() and duration == shootDuration and startTime == shootStart)
       then
         -- GCD cooldown, this could mean that the spell reset!
         if self.expirationTime[id] and self.expirationTime[id] > endTime and self.expirationTime[id] ~= 0 then
@@ -3764,7 +3764,7 @@ function WeakAuras.WatchUnitChange(unit)
     end
 
     local roleUpdate
-    if WeakAuras.IsClassicOrWrath() then
+    if WeakAuras.IsClassicOrTBCOrWrath() then
       function roleUpdate(unit, eventsToSend)
         -- For classic check both raid role and group role
         local oldRaidRole = watchUnitChange.unitRaidRole[unit]
@@ -4039,7 +4039,7 @@ function Private.ExecEnv.CheckTotemSpellId(spellId, triggerSpellId, followoverri
 end
 
 -- Queueable Spells
-if WeakAuras.IsClassicOrWrath() then
+if WeakAuras.IsClassicOrTBCOrWrath() then
   local queueableSpells
   local classQueueableSpells = {
     ["WARRIOR"] = {
@@ -4149,7 +4149,7 @@ do
         tenchFrame:RegisterEvent("WEAPON_ENCHANT_CHANGED")
       end
       tenchFrame:RegisterUnitEvent("UNIT_INVENTORY_CHANGED", "player")
-      if WeakAuras.IsClassicOrWrath() then
+      if WeakAuras.IsClassicOrTBCOrWrath() then
         tenchFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
       end
 
